@@ -11,7 +11,9 @@
     "server": "node server/index.js",
     "start": "NODE_ENV=production node server/index.js",
     "build:api": "node scripts/build-with-api.mjs",
-    "zip:dist": "powershell -NoProfile -Command \"Compress-Archive -Path dist\\* -DestinationPath dist.zip -Force\""
+    "postbuild:seo": "node scripts/generate-sitemap.mjs",
+    "build:api:seo": "node scripts/build-with-api.mjs && node scripts/generate-sitemap.mjs",
+    "zip:dist": "powershell -NoProfile -Command \"Compress-Archive -Path dist, server, package.json -DestinationPath dist.zip -Force\""
   },
   "dependencies": {
     "framer-motion": "^12.35.0",
@@ -27,7 +29,8 @@
     "bcryptjs": "^2.4.3",
     "dotenv": "^16.4.5",
     "express-session": "^1.18.1",
-    "multer": "^1.4.5-lts.1"
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.9.15"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

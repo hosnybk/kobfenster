@@ -2,18 +2,25 @@ import MotionPage from '../components/MotionPage'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
-import { catalogCategories, catalogProducts as fallbackProducts, type CatalogProduct } from '../data/catalogProducts'
+import { catalogProducts as fallbackProducts, type CatalogProduct } from '../data/catalogProducts'
 import { pdfCatalogs } from '../data/pdfCatalogs'
-import { fetchProducts } from '../lib/api'
+import { fetchProducts, fetchCategories } from '../lib/api'
 
 export default function Products() {
   const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
-  const selectedCategory = searchParams.get('category')
-  const activeCategory =
-    selectedCategory && catalogCategories.includes(selectedCategory as (typeof catalogCategories)[number])
-      ? (selectedCategory as (typeof catalogCategories)[number])
-      : 'all'
+  const selectedCategory = (searchParams.get('category') || '').toLowerCase()
+  const [categories, setCategories] = useState<string[]>(['fenster', 'tueren', 'rolllaeden', 'raffstore'])
+  useEffect(() => {
+    let on = true
+    fetchCategories().then((cats) => {
+      if (on && Array.isArray(cats) && cats.length) setCategories(cats)
+    })
+    return () => {
+      on = false
+    }
+  }, [])
+  const activeCategory = categories.includes(selectedCategory) ? selectedCategory : 'all'
   const [page, setPage] = useState(1)
   const [isCatalogAutoScrollPaused, setIsCatalogAutoScrollPaused] = useState(false)
   const itemsPerPage = 6
@@ -37,7 +44,7 @@ export default function Products() {
   const currentPageItems = filteredProducts.slice((page - 1) * itemsPerPage, page * itemsPerPage)
   const [activeProduct, setActiveProduct] = useState<CatalogProduct | null>(null)
 
-  const selectCategory = (category: (typeof catalogCategories)[number]) => {
+  const selectCategory = (category: string) => {
     setPage(1)
     if (category === 'all') {
       setSearchParams({})
@@ -92,7 +99,7 @@ export default function Products() {
           <h1 className="mt-3 text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl">{t('catalog.title')}</h1>
           <p className="mt-3 max-w-3xl text-neutral-700">{t('catalog.subtitle')}</p>
           <div className="mt-6 flex flex-wrap gap-2">
-            {catalogCategories.map((category) => (
+            {categories.map((category) => (
               <button
                 key={category}
                 type="button"
@@ -103,7 +110,7 @@ export default function Products() {
                 }`}
                 onClick={() => selectCategory(category)}
               >
-                {t(`catalog.filters.${category}`)}
+                {t(`catalog.filters.${category}`) || category}
               </button>
             ))}
           </div>

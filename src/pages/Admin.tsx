@@ -14,16 +14,27 @@ export default function Admin() {
 
   const onLogin = async (event: React.FormEvent) => {
     event.preventDefault()
-    const form = new FormData(event.currentTarget as HTMLFormElement)
-    const username = String(form.get('username') || '')
-    const password = String(form.get('password') || '')
+    const formEl = event.currentTarget as HTMLFormElement
+    const formData = new FormData(formEl)
+    const username = String(formData.get('username') || '').trim()
+    const password = String(formData.get('password') || '').trim()
+    
+    if (!username || !password) {
+      setSuccess(false)
+      setError(t('admin.login.error') || 'Missing credentials')
+      return
+    }
+    
     try {
       await login(username, password)
       setSuccess(true)
       setError(null)
+      // Redirect to dashboard, ensuring session is set
       navigate('/admin/dashboard', { replace: true })
-    } catch {
-      setError('Identifiants invalides')
+    } catch (e) {
+      const err = e as { message?: string }
+      setSuccess(false)
+      setError(err?.message || t('admin.login.error') || 'Identifiants invalides')
     }
   }
 
@@ -41,9 +52,9 @@ export default function Admin() {
             <h1 className="text-xl font-semibold text-neutral-900 text-center">{t('admin.login.title')}</h1>
             <p className="mt-1 text-center text-sm text-neutral-600">{t('admin.login.subtitle')}</p>
             <form className="mt-5 space-y-3" onSubmit={onLogin}>
-              <input name="username" type="text" placeholder={t('admin.login.username')} className="glass-input w-full rounded-lg px-3 py-2 text-sm" defaultValue="kobfestner" />
-              <input name="password" type="password" placeholder={t('admin.login.password')} className="glass-input w-full rounded-lg px-3 py-2 text-sm" />
-              {error && <p className="text-sm text-red-600">{t('admin.login.error')}</p>}
+              <input name="username" type="text" required aria-label="Username" placeholder={t('admin.login.username')} className="glass-input w-full rounded-lg px-3 py-2 text-sm" defaultValue="kobfestner" />
+              <input name="password" type="password" required aria-label="Password" placeholder={t('admin.login.password')} className="glass-input w-full rounded-lg px-3 py-2 text-sm" />
+              {error && <p className="text-sm text-red-600">{error}</p>}
               {success && <p className="text-sm text-green-700">{t('admin.login.success')}</p>}
               <button type="submit" className="glass-chip w-full rounded-lg px-4 py-2 font-semibold">{t('admin.login.submit')}</button>
             </form>

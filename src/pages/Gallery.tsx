@@ -1,19 +1,47 @@
 import MotionPage from '../components/MotionPage'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
-import { galleryCategories, galleryProjects } from '../data/galleryProjects'
+import { fetchCategories, fetchGallery } from '../lib/api'
 
 export default function Gallery() {
   const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
-  const selectedCategory = searchParams.get('category')
-  const activeCategory =
-    selectedCategory && galleryCategories.includes(selectedCategory as (typeof galleryCategories)[number])
-      ? (selectedCategory as (typeof galleryCategories)[number])
-      : 'all'
-  const filteredProjects = galleryProjects.filter((project) => activeCategory === 'all' || project.category === activeCategory)
+  const selectedCategory = (searchParams.get('category') || '').toLowerCase()
+  const [projects, setProjects] = useState<Array<{ id: number; category: string; image: string }>>([])
+  const [visibleCount, setVisibleCount] = useState(9)
+  useEffect(() => {
+    let on = true
+    fetchGallery().then((items) => {
+      if (on) setProjects(items || [])
+    })
+    return () => {
+      on = false
+    }
+  }, [])
+  const [categories, setCategories] = useState<string[]>([])
+  useEffect(() => {
+    let on = true
+    fetchCategories()
+      .then((cats) => {
+        if (on && cats?.length) setCategories(cats)
+      })
+      .catch(() => {
+        // fallback: derive from current projects
+        const set = new Set<string>()
+        projects.forEach((p) => set.add(p.category))
+        setCategories(Array.from(set))
+      })
+    return () => {
+      on = false
+    }
+  }, [projects])
+  const activeCategory = categories.includes(selectedCategory) ? selectedCategory : 'all'
+  const filteredProjects = useMemo(() => projects.filter((project) => activeCategory === 'all' || project.category === activeCategory), [projects, activeCategory])
+  const visibleProjects = filteredProjects.slice(0, visibleCount)
 
-  const selectCategory = (category: (typeof galleryCategories)[number]) => {
+  const selectCategory = (category: string) => {
+    setVisibleCount(9)
     if (category === 'all') {
       setSearchParams({})
       return
@@ -29,7 +57,7 @@ export default function Gallery() {
           <h1 className="mt-3 text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl">{t('galleryPage.title')}</h1>
           <p className="mt-3 max-w-3xl text-neutral-700">{t('galleryPage.subtitle')}</p>
           <div className="mt-5 flex flex-wrap gap-2">
-            {galleryCategories.map((category) => (
+            {(['all', ...categories] as string[]).map((category) => (
               <button
                 key={category}
                 type="button"
@@ -40,31 +68,44 @@ export default function Gallery() {
                 }`}
                 onClick={() => selectCategory(category)}
               >
-                {t(`galleryPage.filters.${category}`)}
+                {t(`galleryPage.filters.${category}`) || t(`catalog.filters.${category}`) || category}
               </button>
             ))}
           </div>
         </section>
 
-        <section className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-          {filteredProjects.map((project) => (
+        <section className="grid gap-5 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
+          {visibleProjects.map((project) => (
             <article key={project.id} className="glass-surface group overflow-hidden rounded-2xl transition hover:-translate-y-1 hover:shadow-lg">
               <img
                 src={project.image}
-                alt={t(`galleryPage.items.${project.id}.title`)}
+                alt={t(`galleryPage.items.${project.id}.title`) || project.category}
                 className="h-52 w-full object-cover"
                 onError={(event) => {
                   event.currentTarget.src = '/vite.svg'
                 }}
               />
               <div className="p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-cyan-600">{t(`galleryPage.items.${project.id}.city`)}</p>
-                <h2 className="mt-1 text-lg font-semibold text-neutral-900">{t(`galleryPage.items.${project.id}.title`)}</h2>
-                <p className="mt-2 text-sm text-neutral-700">{t(`galleryPage.items.${project.id}.description`)}</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-cyan-600">{t(`galleryPage.items.${project.id}.city`) || project.category}</p>
+                <h2 className="mt-1 text-lg font-semibold text-neutral-900">{t(`galleryPage.items.${project.id}.title`) || t(`catalog.filters.${project.category}`) || project.category}</h2>
+                <p className="mt-2 text-sm text-neutral-700">{t(`galleryPage.items.${project.id}.description`) || ''}</p>
               </div>
             </article>
           ))}
         </section>
+        {filteredProjects.length === 0 && (
+          <p className="text-center text-neutral-600">{t('galleryPage.noProjects')}</p>
+        )}
+        {visibleCount < filteredProjects.length && (
+          <div className="text-center">
+            <button
+              className="glass-chip rounded-lg px-5 py-2 text-sm font-semibold"
+              onClick={() => setVisibleCount((n) => n + 9)}
+            >
+              {t('galleryPage.loadMore')}
+            </button>
+          </div>
+        )}
 
         <section className="glass-surface rounded-2xl p-6 text-center">
           <h3 className="text-2xl font-semibold text-neutral-900">{t('galleryPage.cta.title')}</h3>

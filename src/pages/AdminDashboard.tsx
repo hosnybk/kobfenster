@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import MotionPage from '../components/MotionPage'
 import type { CatalogProduct } from '../data/catalogProducts'
-import { authMe, logout, listProducts, listGallery, createProduct, updateProduct, deleteProduct, uploadFile, createGalleryItem, deleteGalleryItem } from '../lib/adminApi'
+import { authMe, logout, listProducts, listGallery, createProduct, updateProduct, deleteProduct, uploadFile, createGalleryItem, deleteGalleryItem, listCategories, createCategory, updateCategory, deleteCategory, listContactMessages, type AdminCategory } from '../lib/adminApi'
+import LanguageSwitcher from '../components/LanguageSwitcher'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 
-type Category = 'fenster' | 'tueren' | 'rolllaeden' | 'raffstore'
-type Filter = 'all' | Category
+type Category = string
+type Filter = 'all' | string
 
 export default function AdminDashboard() {
   const { t } = useTranslation()
@@ -16,6 +17,9 @@ export default function AdminDashboard() {
   const [gallery, setGallery] = useState<Array<{ id: number; category: string; image: string }>>([])
   const [filter, setFilter] = useState<Filter>('all')
   const [editing, setEditing] = useState<Partial<CatalogProduct> | null>(null)
+  const [categories, setCategories] = useState<AdminCategory[]>([])
+  const enabledCategories = categories.filter((c) => c.enabled).map((c) => c.id)
+  const [messagesCount, setMessagesCount] = useState<number>(0)
 
   useEffect(() => {
     let active = true
@@ -25,10 +29,12 @@ export default function AdminDashboard() {
         navigate('/admin', { replace: true })
         return
       }
-      Promise.all([listProducts(), listGallery()]).then(([p, g]) => {
+      Promise.all([listProducts(), listGallery(), listCategories(), listContactMessages()]).then(([p, g, cats, msgs]) => {
         if (!active) return
         setProducts(p)
         setGallery(g)
+        setCategories(cats)
+        setMessagesCount(Array.isArray(msgs) ? msgs.length : 0)
         setIsLoading(false)
       })
     })
@@ -38,6 +44,27 @@ export default function AdminDashboard() {
   }, [navigate])
 
   const filtered = useMemo(() => products.filter((p) => filter === 'all' || p.category === filter), [filter, products])
+
+  useEffect(() => {
+    let alive = true
+    const poll = async () => {
+      try {
+        const me = await authMe()
+        if (!alive || !me.authenticated) return
+        const msgs = await listContactMessages()
+        if (!alive) return
+        setMessagesCount(Array.isArray(msgs) ? msgs.length : 0)
+      } catch {
+        // ignore polling errors (e.g., logged out)
+      }
+    }
+    poll()
+    const id = window.setInterval(poll, 60_000)
+    return () => {
+      alive = false
+      window.clearInterval(id)
+    }
+  }, [])
 
   const onUpload = async (file: File) => {
     const { url } = await uploadFile(file)
@@ -66,14 +93,15 @@ export default function AdminDashboard() {
 
   const onCreateGallery = async (event: React.FormEvent) => {
     event.preventDefault()
-    const form = new FormData(event.currentTarget as HTMLFormElement)
+    const formEl = event.currentTarget as HTMLFormElement
+    const form = new FormData(formEl)
     const category = String(form.get('category') || 'fenster') as Category
     const file = (form.get('image') as File) || null
     if (!file || !file.name) return
     const image = await onUpload(file)
     const item = await createGalleryItem({ category, image })
     setGallery((arr) => [...arr, item])
-    ;(event.currentTarget as HTMLFormElement).reset()
+    formEl.reset()
   }
 
   if (isLoading) {
@@ -89,11 +117,22 @@ export default function AdminDashboard() {
   return (
     <MotionPage>
       <div className="container py-10 sm:py-14 space-y-8">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <h1 className="text-2xl font-semibold text-neutral-900">{t('admin.dashboard.title')}</h1>
-          <button className="glass-chip rounded-lg px-4 py-2" onClick={() => logout().then(() => navigate('/admin', { replace: true }))}>
-            {t('admin.dashboard.logout')}
-          </button>
+          <div className="flex items-center gap-2">
+            <button className="glass-chip rounded-lg px-4 py-2 inline-flex items-center gap-2" onClick={() => navigate('/admin/messages')}>
+              <span>{t('admin.messages.title')}</span>
+              {messagesCount > 0 && (
+                <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-cyan-600 px-1.5 text-[11px] font-bold text-white">
+                  {messagesCount}
+                </span>
+              )}
+            </button>
+            <LanguageSwitcher />
+            <button className="glass-chip rounded-lg px-4 py-2" onClick={() => logout().then(() => navigate('/admin', { replace: true }))}>
+              {t('admin.dashboard.logout')}
+            </button>
+          </div>
         </div>
 
         <section className="glass-surface-strong rounded-2xl p-5">
@@ -102,12 +141,11 @@ export default function AdminDashboard() {
             <div className="flex items-center gap-2">
               <select value={filter} onChange={(e) => setFilter(e.target.value as Filter)} className="glass-input rounded-lg px-3 py-1.5 text-sm">
                 <option value="all">{t('admin.dashboard.allCategories')}</option>
-                <option value="fenster">{t('catalog.filters.fenster')}</option>
-                <option value="tueren">{t('catalog.filters.tueren')}</option>
-                <option value="rolllaeden">{t('catalog.filters.rolllaeden')}</option>
-                <option value="raffstore">{t('catalog.filters.raffstore')}</option>
+                {enabledCategories.map((c) => (
+                  <option key={c} value={c}>{t(`catalog.filters.${c}`) || c}</option>
+                ))}
               </select>
-              <button className="glass-chip rounded-lg px-3 py-1.5 text-sm" onClick={() => setEditing({ category: 'tueren' as Category })}>{t('admin.dashboard.newProduct')}</button>
+              <button className="glass-chip rounded-lg px-3 py-1.5 text-sm" onClick={() => setEditing({ category: (enabledCategories[0] || 'tueren') } as Partial<CatalogProduct>)}>{t('admin.dashboard.newProduct')}</button>
             </div>
           </div>
 
@@ -162,11 +200,10 @@ export default function AdminDashboard() {
             </div>
             <form className="p-4 grid gap-3 sm:grid-cols-2" onSubmit={onSaveProduct}>
               <input className="glass-input rounded-lg px-3 py-2 text-sm" placeholder="Modèle" value={editing.model || ''} onChange={(e) => setEditing({ ...editing, model: e.target.value })} />
-              <select className="glass-input rounded-lg px-3 py-2 text-sm" value={(editing.category as Category) || 'tueren'} onChange={(e) => setEditing({ ...editing, category: e.target.value as Category })}>
-                <option value="fenster">Fenster</option>
-                <option value="tueren">Türen</option>
-                <option value="rolllaeden">Rollläden</option>
-                <option value="raffstore">Raffstore</option>
+              <select className="glass-input rounded-lg px-3 py-2 text-sm" value={(editing.category as unknown as string) || enabledCategories[0] || ''} onChange={(e) => setEditing({ ...editing, category: e.target.value } as Partial<CatalogProduct>)}>
+                {enabledCategories.map((c) => (
+                  <option key={c} value={c}>{t(`catalog.filters.${c}`) || c}</option>
+                ))}
               </select>
               <input className="glass-input rounded-lg px-3 py-2 text-sm" placeholder="Image URL" value={editing.image || ''} onChange={(e) => setEditing({ ...editing, image: e.target.value })} />
               <input className="glass-input rounded-lg px-3 py-2 text-sm" placeholder="Couleur" value={editing.color || ''} onChange={(e) => setEditing({ ...editing, color: e.target.value })} />
@@ -184,6 +221,73 @@ export default function AdminDashboard() {
           </article>
         </div>
       )}
+      <section className="container pb-12">
+        <div className="glass-surface-strong rounded-2xl p-5">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-neutral-900">{t('admin.categories.title')}</h2>
+            <form className="flex items-center gap-2" onSubmit={async (e) => {
+              e.preventDefault()
+              const formEl = e.currentTarget as HTMLFormElement
+              const form = new FormData(formEl)
+              const id = String(form.get('id') || '').trim().toLowerCase()
+              const imageFile = (form.get('image') as File) || null
+              if (!id) return
+              try {
+                let imageUrl: string | undefined
+                if (imageFile && imageFile.name) {
+                  const up = await uploadFile(imageFile)
+                  imageUrl = up.url
+                }
+                const created = await createCategory(id, imageUrl)
+                setCategories((arr) => [...arr, created])
+                formEl.reset()
+              } catch (err) {
+                alert((err as Error).message)
+              }
+            }}>
+              <input name="id" placeholder={t('admin.categories.slugPlaceholder')} className="glass-input rounded-lg px-3 py-1.5 text-sm" />
+              <input name="image" type="file" accept="image/*" className="glass-input rounded-lg px-3 py-1.5 text-sm" />
+              <button type="submit" className="glass-chip rounded-lg px-3 py-1.5 text-sm">{t('admin.categories.add')}</button>
+            </form>
+          </div>
+          <div className="mt-3 grid gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+            {categories.map((c) => (
+              <div key={c.id} className="glass-surface flex items-center justify-between rounded-xl p-3">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-semibold">{c.id}</span>
+                  {c.image && <img src={c.image} alt={c.id} className="h-7 w-10 object-cover rounded" onError={(e) => (e.currentTarget.style.display = 'none')} />}
+                  <label className="inline-flex items-center gap-1 text-sm">
+                    <input type="checkbox" checked={c.enabled} onChange={async (e) => {
+                      const next = await updateCategory(c.id, { enabled: e.target.checked })
+                      setCategories((arr) => arr.map((x) => (x.id === c.id ? next : x)))
+                    }} />
+                    <span>{c.enabled ? t('admin.categories.enabled') : t('admin.categories.disabled')}</span>
+                  </label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="glass-chip rounded-lg px-2 py-1 text-xs cursor-pointer">
+                    <span>{t('admin.categories.image')}</span>
+                    <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                      const f = e.target.files?.[0]
+                      if (!f) return
+                      const up = await uploadFile(f)
+                      const next = await updateCategory(c.id, { image: up.url })
+                      setCategories((arr) => arr.map((x) => (x.id === c.id ? next : x)))
+                      e.currentTarget.value = ''
+                    }} />
+                  </label>
+                  <button className="glass-chip rounded-lg px-2 py-1 text-xs" onClick={async () => {
+                    if (!confirm(`Delete category "${c.id}" ?`)) return
+                    await deleteCategory(c.id)
+                    setCategories((arr) => arr.filter((x) => x.id !== c.id))
+                  }}>{t('admin.categories.delete')}</button>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="mt-2 text-xs text-neutral-600">Note: Renaming une catégorie n’est pas supporté ici.</p>
+        </div>
+      </section>
     </MotionPage>
   )
 }

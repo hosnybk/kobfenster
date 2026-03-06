@@ -3,21 +3,33 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import logoKob from '../assets/logo_KOB.svg'
-import contactServicesData from '../data/contactServices.json'
+import { contactServices as servicesData } from '../data/contactServices'
+import { sendContact } from '../lib/api'
 
 export default function Contact() {
   const { t, i18n } = useTranslation()
   const locale = i18n.language.startsWith('en') ? 'en' : 'de'
-  const services = contactServicesData as Array<{
-    id: 'fenster' | 'tueren' | 'rolllaeden' | 'raffstore'
-    title: { de: string; en: string }
-    description: { de: string; en: string }
-    tags: { de: string[]; en: string[] }
-  }>
+  const phoneNumber = '+49 170 8907480'
+  const phoneHref = 'tel:+491708907480'
+  const services = servicesData
   const [openService, setOpenService] = useState<(typeof services)[number]['id']>('fenster')
+  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '', service: '', message: '' })
+  const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle')
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (!form.firstName || !form.lastName || !form.email || !form.message) {
+      setStatus('error')
+      return
+    }
+    try {
+      setStatus('sending')
+      await sendContact({ ...form })
+      setStatus('success')
+      setForm({ firstName: '', lastName: '', email: '', phone: '', service: '', message: '' })
+    } catch {
+      setStatus('error')
+    }
   }
 
   return (
@@ -63,10 +75,45 @@ export default function Contact() {
               <img src={logoKob} alt={t('brand')} className="h-24 w-auto sm:h-28" />
               <p className="mt-5 text-sm font-semibold uppercase tracking-[0.15em] text-neutral-500">{t('contact.quickContact.title')}</p>
               <div className="mt-3 space-y-2 text-neutral-800">
-                <p>{t('contact.quickContact.phone')}</p>
-                <p>{t('contact.quickContact.email')}</p>
-                <p>{t('contact.quickContact.address')}</p>
-                <p>{t('contact.quickContact.hours')}</p>
+                <a href={phoneHref} className="flex items-center gap-2 hover:text-neutral-900">
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.78.62 2.62a2 2 0 0 1-.45 2.11L8 9.95a16 16 0 0 0 6 6l1.5-1.28a2 2 0 0 1 2.11-.45c.84.29 1.72.5 2.62.62A2 2 0 0 1 22 16.92z" />
+                  </svg>
+                  <span>{phoneNumber}</span>
+                </a>
+                <a href="mailto:kob.fenster@outlook.de" className="flex items-center gap-2 hover:text-neutral-900">
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                    <path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" />
+                    <path d="m22 6-10 7L2 6" />
+                  </svg>
+                  <span>kob.fenster@outlook.de</span>
+                </a>
+                <a href="mailto:info@kobfenster.de" className="flex items-center gap-2 hover:text-neutral-900">
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                    <path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" />
+                    <path d="m22 6-10 7L2 6" />
+                  </svg>
+                  <span>info@kobfenster.de</span>
+                </a>
+                <a
+                  href="https://maps.google.com/?q=Kranenstraße%2019,%2065375%20Oestrich-Winkel"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2 hover:text-neutral-900"
+                >
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                    <path d="M12 21s-6-5.33-6-10A6 6 0 0 1 18 11c0 4.67-6 10-6 10z" />
+                    <circle cx="12" cy="11" r="2.5" />
+                  </svg>
+                  <span>{t('contact.quickContact.address')}</span>
+                </a>
+                <p className="flex items-center gap-2">
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M12 7v5l3 3" />
+                  </svg>
+                  <span>{t('contact.quickContact.hours')}</span>
+                </p>
               </div>
               <a
                 href="https://maps.google.com/?q=Kranenstra%C3%9Fe+19,+65375+Oestrich-Winkel,+Germany"
@@ -86,21 +133,55 @@ export default function Contact() {
             <p className="mt-2 text-neutral-700">{t('contact.formSubtitle')}</p>
             <form className="mt-5 space-y-3" onSubmit={handleSubmit}>
               <div className="grid gap-3 sm:grid-cols-2">
-                <input type="text" placeholder={t('contact.form.firstName')} className="glass-input rounded-lg px-3 py-2 text-sm outline-none ring-cyan-500 focus:ring-2" />
-                <input type="text" placeholder={t('contact.form.lastName')} className="glass-input rounded-lg px-3 py-2 text-sm outline-none ring-cyan-500 focus:ring-2" />
+                <label className="relative">
+                  <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500">
+                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  </span>
+                  <input value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} type="text" placeholder={t('contact.form.firstName')} className="glass-input w-full rounded-lg pl-9 px-3 py-2 text-sm outline-none ring-cyan-500 focus:ring-2" />
+                </label>
+                <label className="relative">
+                  <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500">
+                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  </span>
+                  <input value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} type="text" placeholder={t('contact.form.lastName')} className="glass-input w-full rounded-lg pl-9 px-3 py-2 text-sm outline-none ring-cyan-500 focus:ring-2" />
+                </label>
               </div>
-              <input type="email" placeholder={t('contact.form.email')} className="glass-input w-full rounded-lg px-3 py-2 text-sm outline-none ring-cyan-500 focus:ring-2" />
-              <input type="tel" placeholder={t('contact.form.phone')} className="glass-input w-full rounded-lg px-3 py-2 text-sm outline-none ring-cyan-500 focus:ring-2" />
-              <select className="glass-input w-full rounded-lg px-3 py-2 text-sm outline-none ring-cyan-500 focus:ring-2">
-                <option value="">{t('contact.form.service')}</option>
-                {services.map((service) => (
-                  <option key={`option-${service.id}`} value={service.id}>{service.title[locale]}</option>
-                ))}
-              </select>
-              <textarea placeholder={t('contact.form.message')} rows={4} className="glass-input w-full rounded-lg px-3 py-2 text-sm outline-none ring-cyan-500 focus:ring-2" />
-              <button type="submit" className="rounded-xl bg-cyan-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-cyan-700">
-                {t('contact.form.submit')}
-              </button>
+              <label className="relative block">
+                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500">
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><path d="m22 6-10 7L2 6"/></svg>
+                </span>
+                <input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} type="email" placeholder={t('contact.form.email')} className="glass-input w-full rounded-lg pl-9 px-3 py-2 text-sm outline-none ring-cyan-500 focus:ring-2" />
+              </label>
+              <label className="relative block">
+                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500">
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.78.62 2.62a2 2 0 0 1-.45 2.11L8 9.95a16 16 0 0 0 6 6l1.5-1.28a2 2 0 0 1 2.11-.45c.84.29 1.72.5 2.62.62A2 2 0 0 1 22 16.92z"/></svg>
+                </span>
+                <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} type="tel" placeholder={t('contact.form.phone')} className="glass-input w-full rounded-lg pl-9 px-3 py-2 text-sm outline-none ring-cyan-500 focus:ring-2" />
+              </label>
+              <label className="relative block">
+                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500">
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+                </span>
+                <select value={form.service} onChange={(e) => setForm({ ...form, service: e.target.value })} className="glass-input w-full rounded-lg pl-9 px-3 py-2 text-sm outline-none ring-cyan-500 focus:ring-2">
+                  <option value="">{t('contact.form.service')}</option>
+                  {services.map((service) => (
+                    <option key={`option-${service.id}`} value={service.id}>{service.title[locale]}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="relative block">
+                <span className="pointer-events-none absolute left-3 top-3 text-neutral-500">
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22h11A2.5 2.5 0 0 0 20 19.5v-11A2.5 2.5 0 0 0 17.5 6h-11A2.5 2.5 0 0 0 4 8.5z"/></svg>
+                </span>
+                <textarea value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} placeholder={t('contact.form.message')} rows={4} className="glass-input w-full rounded-lg pl-9 px-3 py-2 text-sm outline-none ring-cyan-500 focus:ring-2" />
+              </label>
+              <div className="flex items-center gap-3">
+                <button disabled={status === 'sending'} type="submit" className="rounded-xl bg-cyan-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-cyan-700 disabled:opacity-60">
+                  {status === 'sending' ? '…' : t('contact.form.submit')}
+                </button>
+                {status === 'success' && <span className="text-sm text-green-700">{t('contact.form.success')}</span>}
+                {status === 'error' && <span className="text-sm text-red-700">{t('contact.form.error')}</span>}
+              </div>
             </form>
           </article>
 

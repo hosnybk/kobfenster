@@ -29,8 +29,13 @@ const resources = {
             fenster: { title: 'Fenster' },
             tueren: { title: 'Türen' },
             rolllaeden: { title: 'Rollläden' },
-            raffstore: { title: 'Raffstore' }
+            raffstore: { title: 'Raffstore' },
+            garagentor: { title: 'Garage door' }
           }
+        },
+        productsSlider: {
+          title: 'Featured products',
+          subtitle: 'Browse popular items by category'
         },
         testimonials: {
           title: 'Customer testimonials',
@@ -56,9 +61,7 @@ const resources = {
           button: 'View gallery'
         },
         icons: {
-          radiator: 'Radiator',
           panorama: 'Panorama',
-          smartHome: 'Smart Home',
           store: 'Store',
           hoverCatalog: 'View catalog'
         }
@@ -67,12 +70,15 @@ const resources = {
         badge: 'Gallery',
         title: 'Our completed projects',
         subtitle: 'A visual mockup for your portfolio. You can replace these examples with your real projects at any time.',
+        loadMore: 'Load more',
+        noProjects: 'No projects yet',
         filters: {
           all: 'All',
           fenster: 'Fenster',
           tueren: 'Türen',
           rolllaeden: 'Rollläden',
-          raffstore: 'Raffstore'
+          raffstore: 'Raffstore',
+          garagentor: 'Garage door'
         },
         items: {
           1: {
@@ -237,8 +243,8 @@ const resources = {
         subtitle: 'Tell us about your project and we will get back to you quickly with clear recommendations and a tailored quote.',
         quickContact: {
           title: 'Quick contact',
-          phone: '+49 6123 456 789',
-          email: 'kontakt@kob-fenster.de',
+          phone: '+49 170 8907480',
+          email: 'kob.fenster@outlook.de • info@kobfenster.de',
           address: 'Kranenstraße 19, 65375 Oestrich-Winkel, Germany',
           hours: 'Mon - Fri: 08:00 - 18:00',
           mapButton: 'Open in Maps'
@@ -252,7 +258,9 @@ const resources = {
           phone: 'Phone number',
           service: 'Select a service',
           message: 'Your message',
-          submit: 'Send'
+          submit: 'Send',
+          success: 'Your message has been sent. We will contact you soon.',
+          error: 'Unable to send your message. Please try again later.'
         },
         mapTitle: 'KOB Fenster location'
       },
@@ -270,6 +278,7 @@ const resources = {
       },
       footer: {
         tagline: 'Premium windows & doors',
+        companyDesc: 'Partner with a company dedicated to excellence in window and door installations, ensuring each project is handled with precision and care.',
         ctaTitle: 'Let’s make your custom product!',
         ctaButton: 'Contact us today',
         quickLinks: 'Quick links',
@@ -302,6 +311,20 @@ const resources = {
           create: 'Create',
           close: 'Close',
           loading: 'Loading…'
+        },
+        messages: {
+          title: 'Messages',
+          refresh: 'Refresh',
+          empty: 'No messages yet'
+        },
+        categories: {
+          title: 'Categories',
+          add: 'Add',
+          delete: 'Delete',
+          image: 'Image',
+          enabled: 'enabled',
+          disabled: 'disabled',
+          slugPlaceholder: 'slug e.g. fenster'
         }
       }
     }
@@ -333,8 +356,13 @@ const resources = {
             fenster: { title: 'Fenster' },
             tueren: { title: 'Türen' },
             rolllaeden: { title: 'Rollläden' },
-            raffstore: { title: 'Raffstore' }
+            raffstore: { title: 'Raffstore' },
+            garagentor: { title: 'Garagentor' }
           }
+        },
+        productsSlider: {
+          title: 'Empfohlene Produkte',
+          subtitle: 'Beliebte Artikel nach Kategorie stöbern'
         },
         testimonials: {
           title: 'Kundenstimmen',
@@ -360,9 +388,7 @@ const resources = {
           button: 'Galerie ansehen'
         },
         icons: {
-          radiator: 'Heizkörper',
           panorama: 'Panorama',
-          smartHome: 'Smart Home',
           store: 'Store',
           hoverCatalog: 'Zum Katalog'
         }
@@ -371,12 +397,15 @@ const resources = {
         badge: 'Galerie',
         title: 'Unsere realisierten Projekte',
         subtitle: 'Eine visuelle Muster-Galerie. Sie können diese Beispiele jederzeit durch Ihre eigenen Arbeiten ersetzen.',
+        loadMore: 'Mehr laden',
+        noProjects: 'Noch keine Projekte',
         filters: {
           all: 'Alle',
           fenster: 'Fenster',
           tueren: 'Türen',
           rolllaeden: 'Rollläden',
-          raffstore: 'Raffstore'
+          raffstore: 'Raffstore',
+          garagentor: 'Garagentor'
         },
         items: {
           1: {
@@ -541,8 +570,8 @@ const resources = {
         subtitle: 'Teilen Sie uns Ihr Projekt mit, wir melden uns schnell mit klaren Empfehlungen und einem passenden Angebot zurück.',
         quickContact: {
           title: 'Schnellkontakt',
-          phone: '+49 6123 456 789',
-          email: 'kontakt@kob-fenster.de',
+          phone: '+49 170 8907480',
+          email: 'kob.fenster@outlook.de • info@kobfenster.de',
           address: 'Kranenstraße 19, 65375 Oestrich-Winkel, Deutschland',
           hours: 'Mo - Fr: 08:00 - 18:00',
           mapButton: 'In Maps öffnen'
@@ -556,7 +585,9 @@ const resources = {
           phone: 'Handynummer',
           service: 'Service auswählen',
           message: 'Ihre Nachricht',
-          submit: 'Absenden'
+          submit: 'Absenden',
+          success: 'Ihre Nachricht wurde gesendet. Wir melden uns bald.',
+          error: 'Ihre Nachricht konnte nicht gesendet werden. Bitte später erneut versuchen.'
         },
         mapTitle: 'Standort KOB Fenster'
       },
@@ -574,6 +605,7 @@ const resources = {
       },
       footer: {
         tagline: 'Premium Fenster & Türen',
+        companyDesc: 'Arbeiten Sie mit einem Unternehmen, das sich der Exzellenz bei Fenster- und Türmontagen verschrieben hat – jedes Projekt wird mit Präzision und Sorgfalt ausgeführt.',
         ctaTitle: 'Lassen Sie uns Ihr individuelles Produkt umsetzen!',
         ctaButton: 'Kontaktieren Sie uns',
         quickLinks: 'Schnellzugriff',
@@ -606,6 +638,20 @@ const resources = {
           create: 'Erstellen',
           close: 'Schließen',
           loading: 'Laden…'
+        },
+        messages: {
+          title: 'Nachrichten',
+          refresh: 'Aktualisieren',
+          empty: 'Noch keine Nachrichten'
+        },
+        categories: {
+          title: 'Kategorien',
+          add: 'Hinzufügen',
+          delete: 'Löschen',
+          image: 'Bild',
+          enabled: 'aktiv',
+          disabled: 'inaktiv',
+          slugPlaceholder: 'Slug z. B. fenster'
         }
       }
     }

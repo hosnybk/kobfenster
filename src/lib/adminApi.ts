@@ -12,13 +12,33 @@ function getApiBase(): string {
 const api = (path: string) => `${getApiBase()}${path}`
 
 export async function authMe(): Promise<{ authenticated: boolean; username: string | null }> {
-  const res = await fetch(api('/api/auth/me'), { ...cred })
+  const res = await fetch(api('/api/auth/me'), {
+    ...cred,
+    cache: 'no-store',
+    headers: { ...headers, 'Cache-Control': 'no-cache, no-store, must-revalidate', Pragma: 'no-cache' }
+  })
+  if (!res.ok) return { authenticated: false, username: null }
   return res.json()
 }
 
 export async function login(username: string, password: string) {
-  const res = await fetch(api('/api/auth/login'), { method: 'POST', body: json({ username, password }), headers, ...cred })
-  if (!res.ok) throw new Error('Invalid credentials')
+  const res = await fetch(api('/api/auth/login'), {
+    method: 'POST',
+    body: json({ username, password }),
+    headers,
+    ...cred,
+    cache: 'no-store'
+  })
+  if (!res.ok) {
+    let msg = 'Invalid credentials'
+    try {
+      const body = await res.json()
+      if (body && typeof body.error === 'string' && body.error.length) msg = body.error
+    } catch {
+      // ignore parse error
+    }
+    throw new Error(msg)
+  }
   return res.json()
 }
 
@@ -38,6 +58,35 @@ export async function uploadFile(file: File): Promise<{ url: string }> {
   return { url: abs }
 }
 
+export type AdminCategory = { id: string; enabled: boolean; image?: string }
+export async function listCategories(): Promise<AdminCategory[]> {
+  const res = await fetch(api('/api/categories'), { ...cred })
+  return res.json()
+}
+export async function createCategory(id: string, image?: string): Promise<AdminCategory> {
+  const res = await fetch(api('/api/categories'), { method: 'POST', headers, body: json({ id, image }), ...cred })
+  if (!res.ok) {
+    const b = await res.json().catch(() => ({}))
+    throw new Error(b?.error || 'Create category failed')
+  }
+  return res.json()
+}
+export async function updateCategory(id: string, payload: Partial<AdminCategory>): Promise<AdminCategory> {
+  const res = await fetch(api(`/api/categories/${id}`), { method: 'PUT', headers, body: json(payload), ...cred })
+  if (!res.ok) {
+    const b = await res.json().catch(() => ({}))
+    throw new Error(b?.error || 'Update category failed')
+  }
+  return res.json()
+}
+export async function deleteCategory(id: string): Promise<void> {
+  const res = await fetch(api(`/api/categories/${id}`), { method: 'DELETE', ...cred })
+  if (!res.ok) {
+    const b = await res.json().catch(() => ({}))
+    throw new Error(b?.error || 'Delete category failed')
+  }
+}
+
 export async function listProducts(): Promise<CatalogProduct[]> {
   const res = await fetch(api('/api/products'), { ...cred })
   return res.json()
@@ -54,6 +103,26 @@ export async function updateProduct(id: number, data: Partial<CatalogProduct>) {
 }
 export async function deleteProduct(id: number) {
   const res = await fetch(api(`/api/products/${id}`), { method: 'DELETE', ...cred })
+  if (!res.ok) throw new Error('Delete failed')
+}
+
+export type ContactMessage = {
+  id: number
+  firstName: string
+  lastName: string
+  email: string
+  phone?: string
+  service?: string
+  message: string
+  createdAt: string
+}
+export async function listContactMessages(): Promise<ContactMessage[]> {
+  const res = await fetch(api('/api/contact'), { ...cred })
+  if (!res.ok) throw new Error('List failed')
+  return res.json()
+}
+export async function deleteContactMessage(id: number): Promise<void> {
+  const res = await fetch(api(`/api/contact/${id}`), { method: 'DELETE', ...cred })
   if (!res.ok) throw new Error('Delete failed')
 }
 

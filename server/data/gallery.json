@@ -2,16 +2,21 @@
   {
     "id": 1,
     "category": "fenster",
-    "image": "/gallery/1.jpg"
+    "image": "/uploads/1772736807636_13.png"
   },
   {
     "id": 2,
-    "category": "tueren",
-    "image": "/gallery/2.jpg"
+    "category": "rolllaeden",
+    "image": "/uploads/1772736818401_17.png"
   },
   {
     "id": 3,
-    "category": "rolllaeden",
-    "image": "/gallery/3.jpg"
+    "category": "raffstore",
+    "image": "/uploads/1772736827341_19.png"
+  },
+  {
+    "id": 4,
+    "category": "raffstore",
+    "image": "/uploads/1772736836514_25.png"
   }
 ]

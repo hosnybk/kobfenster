@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
@@ -6,18 +6,46 @@ import MotionPage from '../components/MotionPage'
 import bgHero from '../assets/home/bg_hero.jpg'
 import testimonialsData from '../data/testimonials.json'
 import homeContentData from '../data/homeContent.json'
+import type { CatalogProduct } from '../data/catalogProducts'
+import { fetchGallery } from '../lib/api'
+import { fetchProducts, fetchCategoriesDetailed } from '../lib/api'
 
 export default function Home() {
   const { t, i18n } = useTranslation()
   const [heroParallaxY, setHeroParallaxY] = useState(0)
-  type HomeCategoryKey = 'fenster' | 'tueren' | 'rolllaeden' | 'raffstore'
+  type HomeCategoryKey = string
   const homeContent = homeContentData as {
-    categories: HomeCategoryKey[]
-    categoryImages: Record<HomeCategoryKey, string>
+    categories: string[]
+    categoryImages: Record<string, string>
     showcase: string[]
   }
-  const categories = homeContent.categories.map((key) => ({ key, image: homeContent.categoryImages[key] }))
-  const showcaseImages = homeContent.showcase
+  const [categories, setCategories] = useState<Array<{ key: string; image: string }>>(
+    homeContent.categories.map((key) => ({ key, image: homeContent.categoryImages[key] }))
+  )
+  useEffect(() => {
+    fetchCategoriesDetailed()
+      .then((items) => {
+        const actives = items.filter((c) => c.enabled !== false)
+        if (!actives.length) return
+        const next = actives.map((c) => ({
+          key: c.id,
+          image: c.image || homeContent.categoryImages[c.id] || '/categories/default.svg'
+        }))
+        setCategories(next)
+      })
+      .catch(() => {})
+  }, [homeContent.categoryImages])
+  const [showcaseImages, setShowcaseImages] = useState<string[]>(homeContent.showcase)
+  useEffect(() => {
+    fetchGallery()
+      .then((items) => {
+        if (items && items.length) {
+          const latest = items.slice(-6).map((g) => g.image).reverse()
+          setShowcaseImages(latest)
+        }
+      })
+      .catch(() => {})
+  }, [])
   const locale = i18n.language.startsWith('en') ? 'en' : 'de'
   const testimonials = testimonialsData as Array<{ id: string; author: string; quote: { de: string; en: string } }>
   const getAuthorInitials = (author: string) =>
@@ -27,6 +55,16 @@ export default function Home() {
       .join('')
       .slice(0, 2)
       .toUpperCase()
+  const labelForCategory = (cat: string) => {
+    const key = `home.categories.items.${cat}.title`
+    const val = t(key)
+    return val === key ? cat.replace(/-/g, ' ').replace(/^\w/, (m) => m.toUpperCase()) : val
+  }
+  const labelForFilter = (cat: string) => {
+    const key = `catalog.filters.${cat}`
+    const val = t(key)
+    return val === key ? cat : val
+  }
   const iconTiles = [
     {
       id: 'fenster',
@@ -73,17 +111,6 @@ export default function Home() {
       )
     },
     {
-      id: 'radiator',
-      label: t('home.icons.radiator'),
-      href: '/products',
-      icon: (
-        <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <rect x="4" y="6" width="16" height="12" rx="1.5" />
-          <path d="M8 8v8M11 8v8M14 8v8M17 8v8" />
-        </svg>
-      )
-    },
-    {
       id: 'double-window',
       label: t('home.icons.panorama'),
       href: '/products?category=fenster',
@@ -91,18 +118,6 @@ export default function Home() {
         <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="1.8">
           <rect x="3" y="5" width="18" height="14" rx="1.5" />
           <path d="M8.5 5v14M15.5 5v14M12 5v14" />
-        </svg>
-      )
-    },
-    {
-      id: 'automation',
-      label: t('home.icons.smartHome'),
-      href: '/products',
-      icon: (
-        <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <rect x="6" y="4.5" width="12" height="15" rx="1.5" />
-          <path d="M12 9.5h.01M9.5 14.5h5" />
-          <path d="M8.5 7.5l1 1M15.5 7.5l-1 1" />
         </svg>
       )
     },
@@ -118,6 +133,33 @@ export default function Home() {
       )
     }
   ]
+  const [products, setProducts] = useState<CatalogProduct[]>([])
+  const [productFilter, setProductFilter] = useState<'all' | HomeCategoryKey>('all')
+  const sliderRef = useRef<HTMLDivElement | null>(null)
+  useEffect(() => {
+    fetchProducts().then(setProducts).catch(() => {})
+  }, [])
+  const filteredProducts = products.filter((p) => productFilter === 'all' || p.category === productFilter)
+  const [isPaused, setIsPaused] = useState(false)
+  const scrollBy = (dir: 'left' | 'right') => {
+    const el = sliderRef.current
+    if (!el) return
+    const step = 220
+    el.scrollBy({ left: dir === 'right' ? step : -step, behavior: 'smooth' })
+  }
+  useEffect(() => {
+    const slider = sliderRef.current
+    if (!slider || isPaused) return
+    const id = window.setInterval(() => {
+      const nearEnd = slider.scrollLeft + slider.clientWidth >= slider.scrollWidth - 6
+      if (nearEnd) {
+        slider.scrollTo({ left: 0, behavior: 'smooth' })
+        return
+      }
+      slider.scrollBy({ left: 180, behavior: 'smooth' })
+    }, 2200)
+    return () => window.clearInterval(id)
+  }, [isPaused, filteredProducts.length, productFilter])
 
   useEffect(() => {
     const onScroll = () => {
@@ -169,7 +211,7 @@ export default function Home() {
           transition={{ duration: 0.45, ease: 'easeOut' }}
           className="py-1"
         >
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6 place-content-center">
             {iconTiles.map((tile, index) => (
               <motion.article
                 key={tile.id}
@@ -217,7 +259,7 @@ export default function Home() {
                   }}
                 />
                 <div className="p-4">
-                  <h3 className="text-lg font-semibold text-neutral-900">{t(`home.categories.items.${category.key}.title`)}</h3>
+                  <h3 className="text-lg font-semibold text-neutral-900">{labelForCategory(category.key)}</h3>
                   <div className="mt-3 flex gap-2">
                     <Link to={`/products?category=${category.key}`} className="rounded-lg bg-cyan-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-cyan-700">
                       {t('home.categories.catalogLink')}
@@ -229,6 +271,75 @@ export default function Home() {
                 </div>
               </article>
             ))}
+          </div>
+        </section>
+
+        <section className="space-y-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-2xl font-semibold text-neutral-900 sm:text-3xl">{t('home.productsSlider.title')}</h2>
+            <p className="text-sm text-neutral-600">{t('home.productsSlider.subtitle')}</p>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+            {(['all', ...categories.map((c) => c.key)] as Array<string>).map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setProductFilter(cat as 'all' | HomeCategoryKey)}
+                className={`rounded-full px-3 py-1.5 text-sm font-semibold transition ${
+                  productFilter === cat ? 'bg-cyan-700 text-white' : 'glass-chip text-neutral-800 hover:bg-white/70'
+                }`}
+              >
+                {cat === 'all' ? t('catalog.filters.all') : labelForFilter(cat)}
+              </button>
+            ))}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => scrollBy('left')}
+                className="glass-chip inline-flex h-9 w-9 items-center justify-center rounded-lg text-neutral-700 transition hover:bg-white/70"
+              >
+                {'<'}
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollBy('right')}
+                className="glass-chip inline-flex h-9 w-9 items-center justify-center rounded-lg text-neutral-700 transition hover:bg-white/70"
+              >
+                {'>'}
+              </button>
+            </div>
+          </div>
+          <div
+            className="relative"
+            onMouseEnter={() => setIsPaused(true)}
+            onMouseLeave={() => setIsPaused(false)}
+            onTouchStart={() => setIsPaused(true)}
+            onTouchEnd={() => setIsPaused(false)}
+          >
+            <div ref={sliderRef} className="no-scrollbar flex gap-3 overflow-x-auto pb-2 scroll-smooth">
+              <div className="flex gap-3">
+                {filteredProducts.map((p) => (
+                  <article key={p.id} className="glass-surface group w-44 shrink-0 overflow-hidden rounded-xl text-left transition hover:-translate-y-1 hover:shadow-lg">
+                    <Link to={`/products?category=${p.category}`} className="block">
+                      <div className="relative">
+                        <img
+                          src={p.image}
+                          alt={p.model}
+                          className="h-28 w-full object-cover"
+                          onError={(e) => (e.currentTarget.src = '/vite.svg')}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-tr from-black/20 via-transparent to-transparent" />
+                      </div>
+                      <div className="p-3">
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-cyan-600">{t(`catalog.filters.${p.category}`)}</p>
+                        <h3 className="mt-1 text-sm font-semibold text-neutral-900">{p.model}</h3>
+                      </div>
+                    </Link>
+                  </article>
+                ))}
+              </div>
+            </div>
           </div>
         </section>
 
@@ -272,8 +383,8 @@ export default function Home() {
             </div>
             <div className="glass-chip rounded-xl p-4">
               <p className="text-sm font-semibold text-neutral-500">{t('home.cta.mailLabel')}</p>
-              <a href="mailto:kontakt@kob-fenster.de" className="mt-1 inline-block text-neutral-900 hover:text-blue-700">
-                kontakt@kob-fenster.de
+              <a href="mailto:kob.fenster@outlook.de" className="mt-1 inline-block text-neutral-900 hover:text-blue-700">
+                kob.fenster@outlook.de
               </a>
             </div>
             <div className="glass-chip rounded-xl p-4">

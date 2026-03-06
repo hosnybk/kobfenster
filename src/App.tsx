@@ -1,5 +1,5 @@
 import { Link, NavLink, Route, Routes, useLocation } from 'react-router-dom'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Home from './pages/Home.tsx'
 import About from './pages/About.tsx'
 import Products from './pages/Products.tsx'
@@ -7,16 +7,18 @@ import Gallery from './pages/Gallery.tsx'
 import Contact from './pages/Contact.tsx'
 import CatalogFlipbook from './pages/CatalogFlipbook.tsx'
 import AdminDashboard from './pages/AdminDashboard.tsx'
+import AdminMessages from './pages/AdminMessages.tsx'
 import Admin from './pages/Admin.tsx'
 import logoKob from './assets/logo_KOB.svg'
 import { useTranslation } from 'react-i18next'
+import { setMeta, ensureCanonical } from './lib/seo'
 import LanguageSwitcher from './components/LanguageSwitcher.tsx'
 import { AnimatePresence } from 'framer-motion'
 
 function App() {
-  const { t } = useTranslation()
-  const phoneNumber = '+49 172 9813603'
-  const phoneHref = 'tel:+491729813603'
+  const { t, i18n } = useTranslation()
+  const phoneNumber = '+49 170 8907480'
+  const phoneHref = 'tel:+491708907480'
   const location = useLocation()
   const isCatalogViewer = location.pathname === '/catalog-flipbook'
   const isAdminPage = location.pathname.startsWith('/admin')
@@ -27,6 +29,33 @@ function App() {
         ? 'glass-chip text-cyan-700'
         : 'text-neutral-700 hover:glass-chip hover:text-neutral-900'
     }`
+
+  ;(() => {})()
+
+  useEffect(() => {
+    const path = location.pathname
+    const lang = i18n.language.startsWith('en') ? 'en' : 'de'
+    document.documentElement.lang = lang
+    let title = 'KOB Fenster'
+    let description = t('home.hero.subtitle')
+    if (path === '/about') {
+      title = `KOB Fenster — ${t('nav.about')}`
+      description = t('about.hero.subtitle')
+    } else if (path === '/products') {
+      title = `KOB Fenster — ${t('nav.products')}`
+      description = t('catalog.subtitle')
+    } else if (path === '/gallery') {
+      title = `KOB Fenster — ${t('nav.gallery')}`
+      description = t('galleryPage.subtitle')
+    } else if (path === '/contact') {
+      title = `KOB Fenster — ${t('nav.contact')}`
+      description = t('contact.subtitle')
+    } else {
+      title = `KOB Fenster — ${t('nav.home')}`
+    }
+    setMeta(title, String(description), lang)
+    ensureCanonical()
+  }, [location.pathname, i18n.language, t])
 
   return (
     <div className="min-h-dvh flex flex-col">
@@ -101,28 +130,18 @@ function App() {
             <Route path="/catalog-flipbook" element={<CatalogFlipbook />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/messages" element={<AdminMessages />} />
           </Routes>
         </AnimatePresence>
       </main>
       {!isCatalogViewer && !isAdminPage && <footer className="mt-10 border-t border-white/55 bg-white/45 backdrop-blur-md supports-[backdrop-filter]:bg-white/35">
         <div className="container py-10 sm:py-12">
-          <div className="flex flex-wrap items-start justify-between gap-4 border-b border-neutral-200/70 pb-6">
-            <h2 className="max-w-xl text-3xl font-bold leading-tight tracking-tight text-neutral-900 sm:text-5xl">{t('footer.ctaTitle')}</h2>
-            <Link
-              to="/contact"
-              className="glass-chip rounded-md px-5 py-3 text-sm font-semibold text-cyan-900 transition hover:bg-white/80"
-            >
-              {t('footer.ctaButton')}
-            </Link>
-          </div>
-
-          <div className="grid gap-8 py-7 md:grid-cols-4 text-neutral-900">
+          <div className="grid gap-8 py-2 md:grid-cols-4 text-neutral-900">
             <div>
               <div className="flex items-center gap-2">
-                <img src={logoKob} alt={t('brand')} className="h-10 w-auto" />
-                <span className="text-lg font-semibold text-neutral-900">{t('brand')}</span>
+                <span className="text-lg font-semibold tracking-wide text-neutral-900 uppercase">KOB Fenster</span>
               </div>
-              <p className="mt-3 max-w-56 text-sm text-neutral-600">{t('footer.tagline')}</p>
+              <p className="mt-3 max-w-80 text-sm text-neutral-600">{t('footer.companyDesc')}</p>
               <div className="mt-4 flex items-center gap-2">
                 <a href="#" aria-label="Facebook" className="glass-chip inline-flex h-9 w-9 items-center justify-center rounded-full text-neutral-800 hover:bg-white/80">
                   <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden>
@@ -160,9 +179,33 @@ function App() {
             <div>
               <h3 className="text-lg font-semibold text-neutral-900">{t('nav.contact')}</h3>
               <div className="mt-3 space-y-2 text-sm text-neutral-700">
-                <p>kontakt@kob-fenster.de</p>
-                <p>+49 172 9813603</p>
-                <p>Kranenstraße 19, 65375 Oestrich-Winkel</p>
+                <a href="mailto:kob.fenster@outlook.de" className="flex items-center gap-2 hover:text-neutral-900">
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                    <path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" />
+                    <path d="m22 6-10 7L2 6" />
+                  </svg>
+                  <span>kob.fenster@outlook.de</span>
+                </a>
+                <a href="mailto:info@kobfenster.de" className="flex items-center gap-2 hover:text-neutral-900">
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                    <path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" />
+                    <path d="m22 6-10 7L2 6" />
+                  </svg>
+                  <span>info@kobfenster.de</span>
+                </a>
+                <a href={phoneHref} className="flex items-center gap-2 hover:text-neutral-900">
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.78.62 2.62a2 2 0 0 1-.45 2.11L8 9.95a16 16 0 0 0 6 6l1.5-1.28a2 2 0 0 1 2.11-.45c.84.29 1.72.5 2.62.62A2 2 0 0 1 22 16.92z" />
+                  </svg>
+                  <span>{phoneNumber}</span>
+                </a>
+                <a href="https://maps.google.com/?q=Kranenstraße%2019,%2065375%20Oestrich-Winkel" target="_blank" rel="noreferrer" className="flex items-center gap-2 hover:text-neutral-900">
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                    <path d="M12 21s-6-5.33-6-10A6 6 0 0 1 18 11c0 4.67-6 10-6 10z" />
+                    <circle cx="12" cy="11" r="2.5" />
+                  </svg>
+                  <span>Kranenstraße 19, 65375 Oestrich-Winkel</span>
+                </a>
               </div>
             </div>
 

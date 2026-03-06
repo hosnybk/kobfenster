@@ -1,10 +1,13 @@
 <IfModule mod_rewrite.c>
-  RewriteEngine On
-  # Serve existing files and directories as-is
-  RewriteCond %{REQUEST_FILENAME} -f [OR]
-  RewriteCond %{REQUEST_FILENAME} -d
-  RewriteRule ^ - [L]
-  # Fallback all other requests to index.html (Vite SPA)
-  RewriteRule . /index.html [L]
+RewriteEngine On
+Options -MultiViews
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+RewriteCond %{REQUEST_URI} ^/assets/ [OR]
+RewriteCond %{REQUEST_URI} \.(js|mjs|css|png|jpg|jpeg|webp|gif|svg|ico|json|map|wasm)$ [NC]
+RewriteRule ^ - [L]
+RewriteRule ^ index.html [L]
 </IfModule>
-
+AddType application/javascript .js .mjs
+AddType application/wasm .wasm

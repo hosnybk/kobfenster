@@ -1,0 +1,22 @@
+[
+  {
+    "id": "fenster",
+    "enabled": true,
+    "image": "/uploads/1772736738082_FRE.jpg"
+  },
+  {
+    "id": "tueren",
+    "enabled": true,
+    "image": "/uploads/1772736754302_about-2.webp"
+  },
+  {
+    "id": "rolllaeden",
+    "enabled": true,
+    "image": "/uploads/1772736761301_paneel3.png"
+  },
+  {
+    "id": "raffstore",
+    "enabled": true,
+    "image": "/uploads/1772736768905_about-4.webp"
+  }
+]

@@ -1,32 +1,23 @@
 [
   {
     "id": 1,
-    "model": "6108",
-    "category": "tueren",
-    "image": "/products/6108.jpg",
-    "color": "RAL 7016 / Dekorfolie Golden Oak",
-    "glazing": "3D Edelstahl Lisenen",
-    "handle": "PQ 40 x 20 - 160mm",
-    "application": "Eingangstür"
+    "category": "raffstore",
+    "model": "TEST",
+    "color": "GEEG",
+    "handle": "GREGREG",
+    "glazing": "EGERGERG",
+    "image": "/uploads/1772729692608_FRE.jpg",
+    "datasheet": "/uploads/1772729697981_bg_hero.jpg",
+    "application": "EGRGERG"
   },
   {
     "id": 2,
-    "model": "6110",
-    "category": "tueren",
-    "image": "/products/6110.jpg",
-    "color": "RAL 9007 / Dekorfolie Montana",
-    "glazing": "Satiniert, durchsichtige Streifen",
-    "handle": "PS 10 - 1200mm",
-    "application": "Eingangstür"
-  },
-  {
-    "id": 7,
-    "model": "F-220",
     "category": "fenster",
-    "image": "/products/F-220.jpg",
-    "color": "Anthrazit matt",
-    "glazing": "3-fach Wärmeschutz",
-    "handle": "Alu-Griff standard",
-    "application": "Neubau & Sanierung"
+    "model": "czezec",
+    "color": "zecezcz",
+    "glazing": "cezec",
+    "handle": "zcecze",
+    "image": "/uploads/1772800436464_54.jpg",
+    "datasheet": "/uploads/1772800443735_70.png"
   }
 ]
