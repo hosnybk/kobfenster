@@ -414,12 +414,20 @@ app.get('/api/gallery/projects', async (_req, res) => {
   const items = await readData(DB.gallery, GALLERY_FILE)
   res.json(items)
 })
-app.post('/api/gallery/projects', requireAuth, requireKvForWrites, upload.single('image'), async (req, res) => {
+app.post('/api/gallery/projects', requireAuth, requireKvForWrites, async (req, res) => {
   const items = await readData(DB.gallery, GALLERY_FILE)
+  const category = String(req.body?.category || '').trim()
+  const image = String(req.body?.image || '').trim()
+  const title = String(req.body?.title || '').trim()
+  const description = String(req.body?.description || '').trim()
+  const location = String(req.body?.location || '').trim()
   const newItem = {
     id: Date.now(),
-    category: req.body.category,
-    image: req.file ? `/uploads/${req.file.filename}` : (req.body.image || '')
+    category,
+    image,
+    title,
+    description,
+    location
   }
   items.push(newItem)
   await writeData(DB.gallery, GALLERY_FILE, items)

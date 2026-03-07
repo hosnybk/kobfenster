@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import MotionPage from '../components/MotionPage'
 import type { CatalogProduct } from '../data/catalogProducts'
-import { authMe, logout, listProducts, listGallery, createProduct, updateProduct, deleteProduct, uploadFile, createGalleryItem, deleteGalleryItem, listCategories, createCategory, updateCategory, deleteCategory, listContactMessages, type AdminCategory } from '../lib/adminApi'
+import { authMe, logout, listProducts, listGallery, createProduct, updateProduct, deleteProduct, uploadFile, createGalleryItem, deleteGalleryItem, listCategories, createCategory, updateCategory, deleteCategory, listContactMessages, type AdminCategory, type GalleryProject } from '../lib/adminApi'
 import LanguageSwitcher from '../components/LanguageSwitcher'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -14,7 +14,7 @@ export default function AdminDashboard() {
   const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState(true)
   const [products, setProducts] = useState<CatalogProduct[]>([])
-  const [gallery, setGallery] = useState<Array<{ id: number; category: string; image: string }>>([])
+  const [gallery, setGallery] = useState<GalleryProject[]>([])
   const [filter, setFilter] = useState<Filter>('all')
   const [editing, setEditing] = useState<Partial<CatalogProduct> | null>(null)
   const [categories, setCategories] = useState<AdminCategory[]>([])
@@ -151,12 +151,15 @@ export default function AdminDashboard() {
     const formEl = event.currentTarget as HTMLFormElement
     const form = new FormData(formEl)
     const category = String(form.get('category') || 'fenster') as Category
+    const location = String(form.get('location') || '').trim()
+    const title = String(form.get('title') || '').trim()
+    const description = String(form.get('description') || '').trim()
     const file = (form.get('image') as File) || null
     if (!file || !file.name) return
     try {
       setActionError(null)
       const image = await onUpload(file)
-      const item = await createGalleryItem({ category, image })
+      const item = await createGalleryItem({ category, image, location, title, description })
       setGallery((arr) => [...arr, item])
       formEl.reset()
       broadcastUpdate('gallery')
@@ -240,7 +243,10 @@ export default function AdminDashboard() {
               <article key={g.id} className="glass-surface rounded-xl overflow-hidden">
                 <img src={g.image} alt={`${g.category} ${g.id}`} className="h-36 w-full object-cover" onError={(e) => (e.currentTarget.src = '/vite.svg')} />
                 <div className="p-3 flex items-center justify-between">
-                  <span className="text-sm">{g.category}</span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-neutral-900 truncate">{g.title || g.category}</p>
+                    <p className="text-xs text-neutral-600 truncate">{g.location || ''}</p>
+                  </div>
                   <button className="glass-chip rounded-lg px-3 py-1 text-xs" onClick={async () => {
                     try {
                       setActionError(null)
@@ -264,6 +270,9 @@ export default function AdminDashboard() {
               <option value="rolllaeden">{t('catalog.filters.rolllaeden')}</option>
               <option value="raffstore">{t('catalog.filters.raffstore')}</option>
             </select>
+            <input name="location" type="text" placeholder="Lieu" className="glass-input rounded-lg px-3 py-2 text-sm" />
+            <input name="title" type="text" placeholder="Titre" className="glass-input rounded-lg px-3 py-2 text-sm" />
+            <input name="description" type="text" placeholder="Description" className="glass-input rounded-lg px-3 py-2 text-sm flex-1 min-w-[220px]" />
             <input name="image" type="file" accept="image/*" className="glass-input rounded-lg px-3 py-2 text-sm" />
             <button type="submit" className="glass-chip rounded-lg px-3 py-2 text-sm font-semibold">{t('admin.dashboard.add')}</button>
           </form>

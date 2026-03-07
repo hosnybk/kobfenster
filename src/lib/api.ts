@@ -45,7 +45,7 @@ export async function fetchProducts(): Promise<CatalogProduct[]> {
   }
 }
 
-export async function fetchGallery(): Promise<Array<{ id: number; category: string; image: string }>> {
+export async function fetchGallery(): Promise<Array<{ id: number; category: string; image: string; title?: string; description?: string; location?: string }>> {
   try {
     const res = await fetch(api('/api/gallery/projects'), { headers: { accept: 'application/json' }, credentials: 'include', cache: 'no-store' })
     if (!res.ok) throw new Error('Bad response')
@@ -55,7 +55,7 @@ export async function fetchGallery(): Promise<Array<{ id: number; category: stri
     const { galleryProjects } = await import('../data/galleryProjects')
     const demoImage = galleryProjects?.[0]?.image || '/gallery/1.jpg'
 
-    return (items as Array<{ id: number; category: string; image: string }>).map((it) => ({
+    return (items as Array<{ id: number; category: string; image: string; title?: string; description?: string; location?: string }>).map((it) => ({
       ...it,
       image: it.image ? toAbsolute(it.image) : demoImage
     }))

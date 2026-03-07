@@ -6,6 +6,9 @@ export type GalleryProject = {
   id: number
   category: Exclude<GalleryCategory, 'all'>
   image: string
+  title?: string
+  description?: string
+  location?: string
 }
 
 export const galleryImageBasePath = '/gallery'
