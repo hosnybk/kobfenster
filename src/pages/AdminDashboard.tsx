@@ -10,8 +10,9 @@ type Category = string
 type Filter = 'all' | string
 
 export default function AdminDashboard() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
+  const locale = i18n.language.startsWith('en') ? 'en' : 'de'
   const [isLoading, setIsLoading] = useState(true)
   const [products, setProducts] = useState<CatalogProduct[]>([])
   const [gallery, setGallery] = useState<GalleryProject[]>([])
@@ -151,15 +152,24 @@ export default function AdminDashboard() {
     const formEl = event.currentTarget as HTMLFormElement
     const form = new FormData(formEl)
     const category = String(form.get('category') || 'fenster') as Category
-    const location = String(form.get('location') || '').trim()
-    const title = String(form.get('title') || '').trim()
-    const description = String(form.get('description') || '').trim()
+    const locationDe = String(form.get('locationDe') || '').trim()
+    const locationEn = String(form.get('locationEn') || '').trim()
+    const titleDe = String(form.get('titleDe') || '').trim()
+    const titleEn = String(form.get('titleEn') || '').trim()
+    const descriptionDe = String(form.get('descriptionDe') || '').trim()
+    const descriptionEn = String(form.get('descriptionEn') || '').trim()
     const file = (form.get('image') as File) || null
     if (!file || !file.name) return
     try {
       setActionError(null)
       const image = await onUpload(file)
-      const item = await createGalleryItem({ category, image, location, title, description })
+      const item = await createGalleryItem({
+        category,
+        image,
+        location: { de: locationDe, en: locationEn },
+        title: { de: titleDe, en: titleEn },
+        description: { de: descriptionDe, en: descriptionEn }
+      })
       setGallery((arr) => [...arr, item])
       formEl.reset()
       broadcastUpdate('gallery')
@@ -244,8 +254,8 @@ export default function AdminDashboard() {
                 <img src={g.image} alt={`${g.category} ${g.id}`} className="h-36 w-full object-cover" onError={(e) => (e.currentTarget.src = '/vite.svg')} />
                 <div className="p-3 flex items-center justify-between">
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-neutral-900 truncate">{g.title || g.category}</p>
-                    <p className="text-xs text-neutral-600 truncate">{g.location || ''}</p>
+                    <p className="text-sm font-semibold text-neutral-900 truncate">{g.title?.[locale] || g.title?.de || g.title?.en || g.category}</p>
+                    <p className="text-xs text-neutral-600 truncate">{g.location?.[locale] || g.location?.de || g.location?.en || ''}</p>
                   </div>
                   <button className="glass-chip rounded-lg px-3 py-1 text-xs" onClick={async () => {
                     try {
@@ -270,9 +280,12 @@ export default function AdminDashboard() {
               <option value="rolllaeden">{t('catalog.filters.rolllaeden')}</option>
               <option value="raffstore">{t('catalog.filters.raffstore')}</option>
             </select>
-            <input name="location" type="text" placeholder="Lieu" className="glass-input rounded-lg px-3 py-2 text-sm" />
-            <input name="title" type="text" placeholder="Titre" className="glass-input rounded-lg px-3 py-2 text-sm" />
-            <input name="description" type="text" placeholder="Description" className="glass-input rounded-lg px-3 py-2 text-sm flex-1 min-w-[220px]" />
+            <input name="locationDe" type="text" placeholder={t('admin.gallery.locationDe')} className="glass-input rounded-lg px-3 py-2 text-sm" />
+            <input name="locationEn" type="text" placeholder={t('admin.gallery.locationEn')} className="glass-input rounded-lg px-3 py-2 text-sm" />
+            <input name="titleDe" type="text" placeholder={t('admin.gallery.titleDe')} className="glass-input rounded-lg px-3 py-2 text-sm" />
+            <input name="titleEn" type="text" placeholder={t('admin.gallery.titleEn')} className="glass-input rounded-lg px-3 py-2 text-sm" />
+            <input name="descriptionDe" type="text" placeholder={t('admin.gallery.descriptionDe')} className="glass-input rounded-lg px-3 py-2 text-sm flex-1 min-w-[220px]" />
+            <input name="descriptionEn" type="text" placeholder={t('admin.gallery.descriptionEn')} className="glass-input rounded-lg px-3 py-2 text-sm flex-1 min-w-[220px]" />
             <input name="image" type="file" accept="image/*" className="glass-input rounded-lg px-3 py-2 text-sm" />
             <button type="submit" className="glass-chip rounded-lg px-3 py-2 text-sm font-semibold">{t('admin.dashboard.add')}</button>
           </form>

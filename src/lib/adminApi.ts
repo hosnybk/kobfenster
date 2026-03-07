@@ -159,8 +159,9 @@ export async function deleteContactMessage(id: number): Promise<void> {
   await assertOk(res, 'Delete failed')
 }
 
-export type GalleryProject = { id: number; category: string; image: string; title?: string; description?: string; location?: string }
-export type GalleryProjectPayload = { id?: number; category: string; image: string; title?: string; description?: string; location?: string }
+export type LocalizedText = { de?: string; en?: string }
+export type GalleryProject = { id: number; category: string; image: string; title?: LocalizedText; description?: LocalizedText; location?: LocalizedText }
+export type GalleryProjectPayload = { id?: number; category: string; image: string; title?: LocalizedText; description?: LocalizedText; location?: LocalizedText }
 export async function listGallery(): Promise<GalleryProject[]> {
   const res = await fetch(api('/api/gallery/projects'), { ...cred })
   return res.json()

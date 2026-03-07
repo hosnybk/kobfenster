@@ -325,6 +325,14 @@ const resources = {
           enabled: 'enabled',
           disabled: 'disabled',
           slugPlaceholder: 'slug e.g. fenster'
+        },
+        gallery: {
+          locationDe: 'Location (DE)',
+          locationEn: 'Location (EN)',
+          titleDe: 'Title (DE)',
+          titleEn: 'Title (EN)',
+          descriptionDe: 'Description (DE)',
+          descriptionEn: 'Description (EN)'
         }
       }
     }
@@ -652,6 +660,14 @@ const resources = {
           enabled: 'aktiv',
           disabled: 'inaktiv',
           slugPlaceholder: 'Slug z. B. fenster'
+        },
+        gallery: {
+          locationDe: 'Ort (DE)',
+          locationEn: 'Ort (EN)',
+          titleDe: 'Titel (DE)',
+          titleEn: 'Titel (EN)',
+          descriptionDe: 'Beschreibung (DE)',
+          descriptionEn: 'Beschreibung (EN)'
         }
       }
     }

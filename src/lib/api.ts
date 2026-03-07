@@ -24,6 +24,22 @@ function isArray(value: unknown): value is unknown[] {
   return Array.isArray(value)
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+}
+
+function toLocalizedText(value: unknown): { de?: string; en?: string } | undefined {
+  if (!value) return undefined
+  if (typeof value === 'string') return { de: value, en: value }
+  if (isRecord(value)) {
+    const de = typeof value.de === 'string' ? value.de : undefined
+    const en = typeof value.en === 'string' ? value.en : undefined
+    if (!de && !en) return undefined
+    return { de, en }
+  }
+  return undefined
+}
+
 export async function fetchProducts(): Promise<CatalogProduct[]> {
   try {
     const res = await fetch(api('/api/products'), { headers: { accept: 'application/json' }, credentials: 'include', cache: 'no-store' })
@@ -45,7 +61,7 @@ export async function fetchProducts(): Promise<CatalogProduct[]> {
   }
 }
 
-export async function fetchGallery(): Promise<Array<{ id: number; category: string; image: string; title?: string; description?: string; location?: string }>> {
+export async function fetchGallery(): Promise<Array<{ id: number; category: string; image: string; title?: { de?: string; en?: string }; description?: { de?: string; en?: string }; location?: { de?: string; en?: string } }>> {
   try {
     const res = await fetch(api('/api/gallery/projects'), { headers: { accept: 'application/json' }, credentials: 'include', cache: 'no-store' })
     if (!res.ok) throw new Error('Bad response')
@@ -55,10 +71,17 @@ export async function fetchGallery(): Promise<Array<{ id: number; category: stri
     const { galleryProjects } = await import('../data/galleryProjects')
     const demoImage = galleryProjects?.[0]?.image || '/gallery/1.jpg'
 
-    return (items as Array<{ id: number; category: string; image: string; title?: string; description?: string; location?: string }>).map((it) => ({
-      ...it,
-      image: it.image ? toAbsolute(it.image) : demoImage
-    }))
+    return (items as Array<Record<string, unknown>>).map((raw) => {
+      const it = raw as { id: number; category: string; image: string; title?: unknown; description?: unknown; location?: unknown }
+      return {
+        id: Number(it.id),
+        category: String(it.category || ''),
+        image: it.image ? toAbsolute(String(it.image)) : demoImage,
+        title: toLocalizedText(it.title),
+        description: toLocalizedText(it.description),
+        location: toLocalizedText(it.location)
+      }
+    })
   } catch {
     const { galleryProjects } = await import('../data/galleryProjects')
     return galleryProjects

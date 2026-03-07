@@ -5,10 +5,11 @@ import { useSearchParams } from 'react-router-dom'
 import { fetchCategories, fetchGallery } from '../lib/api'
 
 export default function Gallery() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const locale = i18n.language.startsWith('en') ? 'en' : 'de'
   const [searchParams, setSearchParams] = useSearchParams()
   const selectedCategory = (searchParams.get('category') || '').toLowerCase()
-  const [projects, setProjects] = useState<Array<{ id: number; category: string; image: string; title?: string; description?: string; location?: string }>>([])
+  const [projects, setProjects] = useState<Array<{ id: number; category: string; image: string; title?: { de?: string; en?: string }; description?: { de?: string; en?: string }; location?: { de?: string; en?: string } }>>([])
   const [visibleCount, setVisibleCount] = useState(9)
   const [categories, setCategories] = useState<string[]>([])
   useEffect(() => {
@@ -75,6 +76,11 @@ export default function Gallery() {
     return val === key ? '' : val
   }
 
+  const pick = (val?: { de?: string; en?: string }): string => {
+    if (!val) return ''
+    return val[locale] || val.de || val.en || ''
+  }
+
   return (
     <MotionPage>
       <div className="container py-10 sm:py-14 space-y-8">
@@ -105,16 +111,16 @@ export default function Gallery() {
             <article key={project.id} className="glass-surface group overflow-hidden rounded-2xl transition hover:-translate-y-1 hover:shadow-lg">
               <img
                 src={project.image}
-                alt={project.title || getT(`galleryPage.items.${project.id}.title`) || getT(`catalog.filters.${project.category}`) || project.category}
+                alt={pick(project.title) || getT(`galleryPage.items.${project.id}.title`) || getT(`catalog.filters.${project.category}`) || project.category}
                 className="h-52 w-full object-cover"
                 onError={(event) => {
                   event.currentTarget.src = '/vite.svg'
                 }}
               />
               <div className="p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-cyan-600">{project.location || getT(`galleryPage.items.${project.id}.city`) || getT(`catalog.filters.${project.category}`) || project.category}</p>
-                <h2 className="mt-1 text-lg font-semibold text-neutral-900">{project.title || getT(`galleryPage.items.${project.id}.title`) || getT(`catalog.filters.${project.category}`) || project.category}</h2>
-                <p className="mt-2 text-sm text-neutral-700">{project.description || getT(`galleryPage.items.${project.id}.description`) || ''}</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-cyan-600">{pick(project.location) || getT(`galleryPage.items.${project.id}.city`) || getT(`catalog.filters.${project.category}`) || project.category}</p>
+                <h2 className="mt-1 text-lg font-semibold text-neutral-900">{pick(project.title) || getT(`galleryPage.items.${project.id}.title`) || getT(`catalog.filters.${project.category}`) || project.category}</h2>
+                <p className="mt-2 text-sm text-neutral-700">{pick(project.description) || getT(`galleryPage.items.${project.id}.description`) || ''}</p>
               </div>
             </article>
           ))}

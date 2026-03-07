@@ -418,9 +418,21 @@ app.post('/api/gallery/projects', requireAuth, requireKvForWrites, async (req, r
   const items = await readData(DB.gallery, GALLERY_FILE)
   const category = String(req.body?.category || '').trim()
   const image = String(req.body?.image || '').trim()
-  const title = String(req.body?.title || '').trim()
-  const description = String(req.body?.description || '').trim()
-  const location = String(req.body?.location || '').trim()
+
+  const normalizeI18nText = (val) => {
+    if (!val) return { de: '', en: '' }
+    if (typeof val === 'string') return { de: val.trim(), en: val.trim() }
+    if (typeof val === 'object') {
+      const de = typeof val.de === 'string' ? val.de.trim() : ''
+      const en = typeof val.en === 'string' ? val.en.trim() : ''
+      return { de, en }
+    }
+    return { de: '', en: '' }
+  }
+
+  const title = normalizeI18nText(req.body?.title || { de: req.body?.titleDe, en: req.body?.titleEn })
+  const description = normalizeI18nText(req.body?.description || { de: req.body?.descriptionDe, en: req.body?.descriptionEn })
+  const location = normalizeI18nText(req.body?.location || { de: req.body?.locationDe, en: req.body?.locationEn })
   const newItem = {
     id: Date.now(),
     category,
