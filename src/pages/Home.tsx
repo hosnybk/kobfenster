@@ -25,16 +25,19 @@ export default function Home() {
   useEffect(() => {
     fetchCategoriesDetailed()
       .then((items) => {
+        // Only show enabled categories
         const actives = items.filter((c) => c.enabled !== false)
         if (!actives.length) return
+        
         const next = actives.map((c) => ({
           key: c.id,
+          // Use uploaded image, or fallback to default map, or fallback to generic
           image: c.image || homeContent.categoryImages[c.id] || '/categories/default.svg'
         }))
         setCategories(next)
       })
-      .catch(() => {})
-  }, [homeContent.categoryImages])
+      .catch((e) => console.error('Failed to load categories', e))
+  }, []) // Remove dependency on homeContent.categoryImages to prevent loops
   const [showcaseImages, setShowcaseImages] = useState<string[]>(homeContent.showcase)
   useEffect(() => {
     fetchGallery()

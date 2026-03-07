@@ -233,9 +233,9 @@ export default function AdminDashboard() {
       )}
       <section className="container pb-12">
         <div className="glass-surface-strong rounded-2xl p-5">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <h2 className="text-xl font-semibold text-neutral-900">{t('admin.categories.title')}</h2>
-            <form className="flex items-center gap-2" onSubmit={async (e) => {
+            <form className="flex items-center gap-2 flex-wrap" onSubmit={async (e) => {
               e.preventDefault()
               const formEl = e.currentTarget as HTMLFormElement
               const form = new FormData(formEl)
@@ -255,27 +255,39 @@ export default function AdminDashboard() {
                 alert((err as Error).message)
               }
             }}>
-              <input name="id" placeholder={t('admin.categories.slugPlaceholder')} className="glass-input rounded-lg px-3 py-1.5 text-sm" />
-              <input name="image" type="file" accept="image/*" className="glass-input rounded-lg px-3 py-1.5 text-sm" />
-              <button type="submit" className="glass-chip rounded-lg px-3 py-1.5 text-sm">{t('admin.categories.add')}</button>
+              <input name="id" placeholder={t('admin.categories.slugPlaceholder')} className="glass-input rounded-lg px-3 py-1.5 text-sm w-32" />
+              <input name="image" type="file" accept="image/*" className="glass-input rounded-lg px-3 py-1.5 text-sm w-48" />
+              <button type="submit" className="glass-chip rounded-lg px-3 py-1.5 text-sm font-medium hover:bg-white/50 transition-colors">{t('admin.categories.add')}</button>
             </form>
           </div>
-          <div className="mt-3 grid gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-4 grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {categories.map((c) => (
-              <div key={c.id} className="glass-surface flex items-center justify-between rounded-xl p-3">
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-semibold">{c.id}</span>
-                  {c.image && <img src={c.image} alt={c.id} className="h-7 w-10 object-cover rounded" onError={(e) => (e.currentTarget.style.display = 'none')} />}
-                  <label className="inline-flex items-center gap-1 text-sm">
-                    <input type="checkbox" checked={c.enabled} onChange={async (e) => {
-                      const next = await updateCategory(c.id, { enabled: e.target.checked })
-                      setCategories((arr) => arr.map((x) => (x.id === c.id ? next : x)))
-                    }} />
-                    <span>{c.enabled ? t('admin.categories.enabled') : t('admin.categories.disabled')}</span>
-                  </label>
+              <div key={c.id} className="glass-surface flex flex-col gap-3 rounded-xl p-4 transition-all hover:shadow-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="relative h-12 w-12 rounded-lg overflow-hidden bg-white/50 flex items-center justify-center">
+                       {c.image ? (
+                         <img src={c.image} alt={c.id} className="h-full w-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                       ) : (
+                         <span className="text-xs text-gray-400">No img</span>
+                       )}
+                    </div>
+                    <div>
+                      <span className="block text-sm font-bold capitalize">{c.id}</span>
+                      <label className="inline-flex items-center gap-2 text-xs text-gray-600 mt-1 cursor-pointer select-none">
+                        <input type="checkbox" className="accent-blue-600 h-3 w-3" checked={c.enabled !== false} onChange={async (e) => {
+                          const next = await updateCategory(c.id, { enabled: e.target.checked })
+                          setCategories((arr) => arr.map((x) => (x.id === c.id ? next : x)))
+                        }} />
+                        <span>{c.enabled !== false ? t('admin.categories.enabled') : t('admin.categories.disabled')}</span>
+                      </label>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <label className="glass-chip rounded-lg px-2 py-1 text-xs cursor-pointer">
+                
+                <div className="flex items-center justify-between pt-2 border-t border-black/5">
+                  <label className="text-xs text-blue-600 hover:text-blue-800 cursor-pointer font-medium flex items-center gap-1">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
                     <span>{t('admin.categories.image')}</span>
                     <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
                       const f = e.target.files?.[0]
@@ -286,11 +298,14 @@ export default function AdminDashboard() {
                       e.currentTarget.value = ''
                     }} />
                   </label>
-                  <button className="glass-chip rounded-lg px-2 py-1 text-xs" onClick={async () => {
+                  <button className="text-xs text-red-500 hover:text-red-700 font-medium flex items-center gap-1" onClick={async () => {
                     if (!confirm(`Delete category "${c.id}" ?`)) return
                     await deleteCategory(c.id)
                     setCategories((arr) => arr.filter((x) => x.id !== c.id))
-                  }}>{t('admin.categories.delete')}</button>
+                  }}>
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    {t('admin.categories.delete')}
+                  </button>
                 </div>
               </div>
             ))}
