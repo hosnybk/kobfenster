@@ -20,6 +20,7 @@ export default function AdminDashboard() {
   const [categories, setCategories] = useState<AdminCategory[]>([])
   const enabledCategories = categories.filter((c) => c.enabled).map((c) => c.id)
   const [messagesCount, setMessagesCount] = useState<number>(0)
+  const [actionError, setActionError] = useState<string | null>(null)
 
   useEffect(() => {
     let active = true
@@ -77,8 +78,15 @@ export default function AdminDashboard() {
   }, [])
 
   const onUpload = async (file: File) => {
-    const { url } = await uploadFile(file)
-    return url
+    try {
+      setActionError(null)
+      const { url } = await uploadFile(file)
+      return url
+    } catch (e) {
+      const msg = (e as any)?.message || String(e)
+      setActionError(msg)
+      throw e
+    }
   }
 
   const onSaveProduct = async (event: React.FormEvent) => {
@@ -144,6 +152,11 @@ export default function AdminDashboard() {
             </button>
           </div>
         </div>
+        {actionError && (
+          <div className="glass-surface-strong rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-700">
+            {actionError}
+          </div>
+        )}
 
         <section className="glass-surface-strong rounded-2xl p-5">
           <div className="flex items-center justify-between">
@@ -254,6 +267,7 @@ export default function AdminDashboard() {
               } catch (err) {
                 console.error('Category creation failed:', err)
                 const msg = (err as any).message || JSON.stringify(err)
+                setActionError(msg)
                 alert(`Error: ${msg}`)
               }
             }}>
@@ -301,6 +315,7 @@ export default function AdminDashboard() {
                       } catch (err) {
                         console.error('Category update failed:', err)
                         const msg = (err as any).message || JSON.stringify(err)
+                        setActionError(msg)
                         alert(`Upload failed: ${msg}`)
                       } finally {
                         e.currentTarget.value = ''

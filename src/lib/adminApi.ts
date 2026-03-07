@@ -15,6 +15,31 @@ function getApiBase(): string {
 }
 const api = (path: string) => `${getApiBase()}${path}`
 
+async function readErrorMessage(res: Response, fallback: string): Promise<string> {
+  const status = `${res.status} ${res.statusText || ''}`.trim()
+  const contentType = res.headers.get('content-type') || ''
+  try {
+    if (contentType.includes('application/json')) {
+      const body = (await res.json().catch(() => null)) as any
+      const msg =
+        (typeof body?.error === 'string' && body.error) ||
+        (typeof body?.message === 'string' && body.message) ||
+        (typeof body === 'string' && body) ||
+        (body ? JSON.stringify(body) : '')
+      return msg ? `${msg} (${status})` : `${fallback} (${status})`
+    }
+    const text = await res.text().catch(() => '')
+    return text ? `${text} (${status})` : `${fallback} (${status})`
+  } catch {
+    return `${fallback} (${status})`
+  }
+}
+
+async function assertOk(res: Response, fallback: string): Promise<void> {
+  if (res.ok) return
+  throw new Error(await readErrorMessage(res, fallback))
+}
+
 export async function authMe(): Promise<{ authenticated: boolean; username: string | null }> {
   const res = await fetch(api('/api/auth/me'), {
     ...cred,
@@ -33,16 +58,7 @@ export async function login(username: string, password: string) {
     ...cred,
     cache: 'no-store'
   })
-  if (!res.ok) {
-    let msg = 'Invalid credentials'
-    try {
-      const body = await res.json()
-      if (body && typeof body.error === 'string' && body.error.length) msg = body.error
-    } catch {
-      // ignore parse error
-    }
-    throw new Error(msg)
-  }
+  await assertOk(res, 'Invalid credentials')
   return res.json()
 }
 
@@ -54,7 +70,7 @@ export async function uploadFile(file: File): Promise<{ url: string }> {
   const form = new FormData()
   form.append('file', file)
   const res = await fetch(api('/api/uploads'), { method: 'POST', body: form, credentials: 'include' })
-  if (!res.ok) throw new Error('Upload failed')
+  await assertOk(res, 'Upload failed')
   const out = await res.json()
   const base = getApiBase()
   const url: string = out?.url || ''
@@ -69,26 +85,17 @@ export async function listCategories(): Promise<AdminCategory[]> {
 }
 export async function createCategory(id: string, image?: string): Promise<AdminCategory> {
   const res = await fetch(api('/api/categories'), { method: 'POST', headers, body: json({ id, image }), ...cred })
-  if (!res.ok) {
-    const b = await res.json().catch(() => ({}))
-    throw new Error(b?.error || 'Create category failed')
-  }
+  await assertOk(res, 'Create category failed')
   return res.json()
 }
 export async function updateCategory(id: string, payload: Partial<AdminCategory>): Promise<AdminCategory> {
   const res = await fetch(api(`/api/categories/${id}`), { method: 'PUT', headers, body: json(payload), ...cred })
-  if (!res.ok) {
-    const b = await res.json().catch(() => ({}))
-    throw new Error(b?.error || 'Update category failed')
-  }
+  await assertOk(res, 'Update category failed')
   return res.json()
 }
 export async function deleteCategory(id: string): Promise<void> {
   const res = await fetch(api(`/api/categories/${id}`), { method: 'DELETE', ...cred })
-  if (!res.ok) {
-    const b = await res.json().catch(() => ({}))
-    throw new Error(b?.error || 'Delete category failed')
-  }
+  await assertOk(res, 'Delete category failed')
 }
 
 export async function listProducts(): Promise<CatalogProduct[]> {
@@ -97,17 +104,17 @@ export async function listProducts(): Promise<CatalogProduct[]> {
 }
 export async function createProduct(data: Partial<CatalogProduct>) {
   const res = await fetch(api('/api/products'), { method: 'POST', headers, body: json(data), ...cred })
-  if (!res.ok) throw new Error('Create failed')
+  await assertOk(res, 'Create failed')
   return res.json()
 }
 export async function updateProduct(id: number, data: Partial<CatalogProduct>) {
   const res = await fetch(api(`/api/products/${id}`), { method: 'PUT', headers, body: json(data), ...cred })
-  if (!res.ok) throw new Error('Update failed')
+  await assertOk(res, 'Update failed')
   return res.json()
 }
 export async function deleteProduct(id: number) {
   const res = await fetch(api(`/api/products/${id}`), { method: 'DELETE', ...cred })
-  if (!res.ok) throw new Error('Delete failed')
+  await assertOk(res, 'Delete failed')
 }
 
 export type ContactMessage = {
@@ -122,12 +129,12 @@ export type ContactMessage = {
 }
 export async function listContactMessages(): Promise<ContactMessage[]> {
   const res = await fetch(api('/api/contact'), { ...cred })
-  if (!res.ok) throw new Error('List failed')
+  await assertOk(res, 'List failed')
   return res.json()
 }
 export async function deleteContactMessage(id: number): Promise<void> {
   const res = await fetch(api(`/api/contact/${id}`), { method: 'DELETE', ...cred })
-  if (!res.ok) throw new Error('Delete failed')
+  await assertOk(res, 'Delete failed')
 }
 
 export type GalleryProjectPayload = { id?: number; category: string; image: string }
@@ -137,10 +144,10 @@ export async function listGallery(): Promise<Array<{ id: number; category: strin
 }
 export async function createGalleryItem(data: GalleryProjectPayload) {
   const res = await fetch(api('/api/gallery/projects'), { method: 'POST', headers, body: json(data), ...cred })
-  if (!res.ok) throw new Error('Create failed')
+  await assertOk(res, 'Create failed')
   return res.json()
 }
 export async function deleteGalleryItem(id: number) {
   const res = await fetch(api(`/api/gallery/projects/${id}`), { method: 'DELETE', ...cred })
-  if (!res.ok) throw new Error('Delete failed')
+  await assertOk(res, 'Delete failed')
 }
