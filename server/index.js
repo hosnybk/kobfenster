@@ -54,10 +54,21 @@ const defaultCategories = [
   { id: 'garagentor', enabled: true, image: '/categories/garagentor.svg' }
 ]
 
+const isKvConfigured = () =>
+  Boolean(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN)
+
+const getDefaultsForKey = (key) => {
+  if (key === DB.products) return defaultProducts
+  if (key === DB.gallery) return defaultGallery
+  if (key === DB.categories) return defaultCategories
+  return []
+}
+
 // Read Data
 const readData = async (key, file) => {
   if (process.env.VERCEL) {
-    // Vercel KV
+    // Vercel KV (if configured)
+    if (!isKvConfigured()) return getDefaultsForKey(key)
     try {
       const data = await kv.get(key)
       if (!data && key === DB.products) return defaultProducts
@@ -66,7 +77,7 @@ const readData = async (key, file) => {
       return data || []
     } catch (e) {
       console.error('KV Read Error:', e)
-      return []
+      return getDefaultsForKey(key)
     }
   } else {
     // Local FS
@@ -85,7 +96,8 @@ const readData = async (key, file) => {
 // Write Data
 const writeData = async (key, file, data) => {
   if (process.env.VERCEL) {
-    // Vercel KV
+    // Vercel KV (if configured)
+    if (!isKvConfigured()) return
     await kv.set(key, data)
   } else {
     // Local FS
@@ -221,7 +233,7 @@ app.get('/api', (_req, res) => res.redirect('/api/health'))
 
 app.get('/api/health', (_req, res) => {
   const configured = Boolean(ADMIN_PASSWORD_HASH || process.env.ADMIN_PASSWORD)
-  res.json({ ok: true, authConfigured: configured, username: ADMIN_USERNAME })
+  res.json({ ok: true, authConfigured: configured, username: ADMIN_USERNAME, kvConfigured: isKvConfigured() })
 })
 
 // Auth
