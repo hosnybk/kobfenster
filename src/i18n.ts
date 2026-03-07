@@ -327,6 +327,10 @@ const resources = {
           slugPlaceholder: 'slug e.g. fenster'
         },
         gallery: {
+          hint: 'Switch language to edit the other translation.',
+          location: 'Location',
+          title: 'Title',
+          description: 'Description',
           locationDe: 'Location (DE)',
           locationEn: 'Location (EN)',
           titleDe: 'Title (DE)',
@@ -662,6 +666,10 @@ const resources = {
           slugPlaceholder: 'Slug z. B. fenster'
         },
         gallery: {
+          hint: 'Sprache wechseln, um die andere Übersetzung zu bearbeiten.',
+          location: 'Ort',
+          title: 'Titel',
+          description: 'Beschreibung',
           locationDe: 'Ort (DE)',
           locationEn: 'Ort (EN)',
           titleDe: 'Titel (DE)',

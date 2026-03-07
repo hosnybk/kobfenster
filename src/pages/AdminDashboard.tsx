@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import MotionPage from '../components/MotionPage'
 import type { CatalogProduct } from '../data/catalogProducts'
 import { authMe, logout, listProducts, listGallery, createProduct, updateProduct, deleteProduct, uploadFile, createGalleryItem, deleteGalleryItem, listCategories, createCategory, updateCategory, deleteCategory, listContactMessages, type AdminCategory, type GalleryProject } from '../lib/adminApi'
@@ -22,6 +22,20 @@ export default function AdminDashboard() {
   const enabledCategories = categories.filter((c) => c.enabled).map((c) => c.id)
   const [messagesCount, setMessagesCount] = useState<number>(0)
   const [actionError, setActionError] = useState<string | null>(null)
+  const galleryFileRef = useRef<HTMLInputElement | null>(null)
+  const [galleryDraft, setGalleryDraft] = useState<{
+    category: Category
+    location: { de?: string; en?: string }
+    title: { de?: string; en?: string }
+    description: { de?: string; en?: string }
+    imageFile: File | null
+  }>({
+    category: 'fenster',
+    location: {},
+    title: {},
+    description: {},
+    imageFile: null
+  })
 
   const getErrMsg = (e: unknown): string => {
     if (e instanceof Error && e.message) return e.message
@@ -149,29 +163,21 @@ export default function AdminDashboard() {
 
   const onCreateGallery = async (event: React.FormEvent) => {
     event.preventDefault()
-    const formEl = event.currentTarget as HTMLFormElement
-    const form = new FormData(formEl)
-    const category = String(form.get('category') || 'fenster') as Category
-    const locationDe = String(form.get('locationDe') || '').trim()
-    const locationEn = String(form.get('locationEn') || '').trim()
-    const titleDe = String(form.get('titleDe') || '').trim()
-    const titleEn = String(form.get('titleEn') || '').trim()
-    const descriptionDe = String(form.get('descriptionDe') || '').trim()
-    const descriptionEn = String(form.get('descriptionEn') || '').trim()
-    const file = (form.get('image') as File) || null
-    if (!file || !file.name) return
+    const file = galleryDraft.imageFile
+    if (!file) return
     try {
       setActionError(null)
       const image = await onUpload(file)
       const item = await createGalleryItem({
-        category,
+        category: galleryDraft.category,
         image,
-        location: { de: locationDe, en: locationEn },
-        title: { de: titleDe, en: titleEn },
-        description: { de: descriptionDe, en: descriptionEn }
+        location: galleryDraft.location,
+        title: galleryDraft.title,
+        description: galleryDraft.description
       })
       setGallery((arr) => [...arr, item])
-      formEl.reset()
+      setGalleryDraft({ category: galleryDraft.category, location: {}, title: {}, description: {}, imageFile: null })
+      if (galleryFileRef.current) galleryFileRef.current.value = ''
       broadcastUpdate('gallery')
     } catch (e) {
       const msg = getErrMsg(e)
@@ -274,20 +280,18 @@ export default function AdminDashboard() {
             ))}
           </div>
           <form className="mt-4 flex flex-wrap items-end gap-2" onSubmit={onCreateGallery}>
-            <select name="category" className="glass-input rounded-lg px-3 py-2 text-sm">
+            <select value={galleryDraft.category} onChange={(e) => setGalleryDraft((d) => ({ ...d, category: e.target.value as Category }))} className="glass-input rounded-lg px-3 py-2 text-sm">
               <option value="fenster">{t('catalog.filters.fenster')}</option>
               <option value="tueren">{t('catalog.filters.tueren')}</option>
               <option value="rolllaeden">{t('catalog.filters.rolllaeden')}</option>
               <option value="raffstore">{t('catalog.filters.raffstore')}</option>
             </select>
-            <input name="locationDe" type="text" placeholder={t('admin.gallery.locationDe')} className="glass-input rounded-lg px-3 py-2 text-sm" />
-            <input name="locationEn" type="text" placeholder={t('admin.gallery.locationEn')} className="glass-input rounded-lg px-3 py-2 text-sm" />
-            <input name="titleDe" type="text" placeholder={t('admin.gallery.titleDe')} className="glass-input rounded-lg px-3 py-2 text-sm" />
-            <input name="titleEn" type="text" placeholder={t('admin.gallery.titleEn')} className="glass-input rounded-lg px-3 py-2 text-sm" />
-            <input name="descriptionDe" type="text" placeholder={t('admin.gallery.descriptionDe')} className="glass-input rounded-lg px-3 py-2 text-sm flex-1 min-w-[220px]" />
-            <input name="descriptionEn" type="text" placeholder={t('admin.gallery.descriptionEn')} className="glass-input rounded-lg px-3 py-2 text-sm flex-1 min-w-[220px]" />
-            <input name="image" type="file" accept="image/*" className="glass-input rounded-lg px-3 py-2 text-sm" />
+            <input value={galleryDraft.location?.[locale] || ''} onChange={(e) => setGalleryDraft((d) => ({ ...d, location: { ...d.location, [locale]: e.target.value } }))} type="text" placeholder={t('admin.gallery.location')} className="glass-input rounded-lg px-3 py-2 text-sm" />
+            <input value={galleryDraft.title?.[locale] || ''} onChange={(e) => setGalleryDraft((d) => ({ ...d, title: { ...d.title, [locale]: e.target.value } }))} type="text" placeholder={t('admin.gallery.title')} className="glass-input rounded-lg px-3 py-2 text-sm" />
+            <input value={galleryDraft.description?.[locale] || ''} onChange={(e) => setGalleryDraft((d) => ({ ...d, description: { ...d.description, [locale]: e.target.value } }))} type="text" placeholder={t('admin.gallery.description')} className="glass-input rounded-lg px-3 py-2 text-sm flex-1 min-w-[220px]" />
+            <input ref={galleryFileRef} type="file" accept="image/*" className="glass-input rounded-lg px-3 py-2 text-sm" onChange={(e) => setGalleryDraft((d) => ({ ...d, imageFile: e.target.files?.[0] || null }))} />
             <button type="submit" className="glass-chip rounded-lg px-3 py-2 text-sm font-semibold">{t('admin.dashboard.add')}</button>
+            <p className="basis-full text-xs text-neutral-600">{t('admin.gallery.hint')}</p>
           </form>
         </section>
       </div>
