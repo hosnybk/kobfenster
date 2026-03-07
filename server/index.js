@@ -179,19 +179,7 @@ const requireAuth = (req, res, next) => {
 }
 
 // Uploads
-const storage = multer.diskStorage({
-  destination: async (req, file, cb) => {
-    if (process.env.VERCEL) {
-       try { await fs.mkdir(UPLOADS_DIR, { recursive: true }) } catch {}
-    }
-    cb(null, UPLOADS_DIR)
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname)
-    const name = `${Date.now()}_${Math.round(Math.random() * 1e9)}${ext}`
-    cb(null, name)
-  }
-})
+const storage = multer.memoryStorage() // Use memory storage for Vercel compatibility
 const upload = multer({ storage })
 
 // Friendly root page (dev only) or serve SPA in production
