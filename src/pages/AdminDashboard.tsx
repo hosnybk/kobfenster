@@ -252,7 +252,8 @@ export default function AdminDashboard() {
                 setCategories((arr) => [...arr, created])
                 formEl.reset()
               } catch (err) {
-                alert((err as Error).message)
+                console.error('Category creation failed:', err)
+                alert(`Error: ${(err as Error).message}`)
               }
             }}>
               <input name="id" placeholder={t('admin.categories.slugPlaceholder')} className="glass-input rounded-lg px-3 py-1.5 text-sm w-32" />
