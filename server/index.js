@@ -1,6 +1,8 @@
 import express from 'express'
 import cors from 'cors'
 import session from 'express-session'
+import cookieParser from 'cookie-parser'
+import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
 import multer from 'multer'
 import { promises as fs } from 'fs'
@@ -80,30 +82,54 @@ const IS_PROD = process.env.NODE_ENV === 'production'
 // 'trust proxy' 1 is needed.
 app.set('trust proxy', 1)
 
-app.use(
-  session({
-    secret: SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false, // Don't create session until something stored
-    cookie: {
-      httpOnly: true,
-      // In dev (localhost), use 'lax'. In prod (HTTPS), use 'none' for cross-site or 'lax' for same-site.
-      // Since frontend/backend are on same domain in prod (served by express), 'lax' is fine and safer.
-      // Only if frontend is on different domain (e.g. Vercel) we need 'none'.
-      // Here we serve static files from same origin in prod.
-      sameSite: 'lax', 
-      secure: IS_PROD // Secure only in prod
-    }
-  })
-)
+app.use(cookieParser(SESSION_SECRET))
+
+// Only use session in dev or Hostinger. Vercel uses JWT cookie.
+if (!process.env.VERCEL) {
+  app.use(
+    session({
+      secret: SESSION_SECRET,
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        httpOnly: true,
+        sameSite: 'lax', 
+        secure: IS_PROD
+      }
+    })
+  )
+}
 
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'kobfestner'
 let ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH || ''
 if (!ADMIN_PASSWORD_HASH && process.env.ADMIN_PASSWORD) {
   ADMIN_PASSWORD_HASH = bcrypt.hashSync(process.env.ADMIN_PASSWORD, 10)
 }
+
+const verifyToken = (req) => {
+  const token = req.cookies?.auth_token
+  if (!token) return null
+  try {
+    const decoded = jwt.verify(token, SESSION_SECRET)
+    return decoded.user === ADMIN_USERNAME ? decoded.user : null
+  } catch {
+    return null
+  }
+}
+
 const requireAuth = (req, res, next) => {
+  // Check session (Hostinger/Dev)
   if (req.session && req.session.user === ADMIN_USERNAME) return next()
+  
+  // Check JWT (Vercel)
+  if (process.env.VERCEL) {
+    const user = verifyToken(req)
+    if (user) {
+      req.user = user
+      return next()
+    }
+  }
+  
   return res.status(401).json({ error: 'Unauthorized' })
 }
 
