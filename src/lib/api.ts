@@ -20,11 +20,25 @@ const toAbsolute = (url: string): string => {
   return url
 }
 
+function isArray(value: unknown): value is unknown[] {
+  return Array.isArray(value)
+}
+
 export async function fetchProducts(): Promise<CatalogProduct[]> {
   try {
     const res = await fetch(api('/api/products'), { headers: { accept: 'application/json' }, credentials: 'include', cache: 'no-store' })
     if (!res.ok) throw new Error('Bad response')
-    return (await res.json()) as CatalogProduct[]
+    const items = (await res.json()) as unknown
+    if (!isArray(items) || items.length === 0) throw new Error('Empty')
+
+    const { catalogProducts } = await import('../data/catalogProducts')
+    const demoImage = catalogProducts?.[0]?.image || '/products/6108.jpg'
+
+    return (items as CatalogProduct[]).map((p) => ({
+      ...p,
+      image: p.image ? toAbsolute(p.image) : demoImage,
+      datasheet: p.datasheet ? toAbsolute(p.datasheet) : p.datasheet
+    }))
   } catch {
     const { catalogProducts } = await import('../data/catalogProducts')
     return catalogProducts
@@ -35,8 +49,16 @@ export async function fetchGallery(): Promise<Array<{ id: number; category: stri
   try {
     const res = await fetch(api('/api/gallery/projects'), { headers: { accept: 'application/json' }, credentials: 'include', cache: 'no-store' })
     if (!res.ok) throw new Error('Bad response')
-    const items = (await res.json()) as Array<{ id: number; category: string; image: string }>
-    return items.map((it) => ({ ...it, image: toAbsolute(it.image) }))
+    const items = (await res.json()) as unknown
+    if (!isArray(items) || items.length === 0) throw new Error('Empty')
+
+    const { galleryProjects } = await import('../data/galleryProjects')
+    const demoImage = galleryProjects?.[0]?.image || '/gallery/1.jpg'
+
+    return (items as Array<{ id: number; category: string; image: string }>).map((it) => ({
+      ...it,
+      image: it.image ? toAbsolute(it.image) : demoImage
+    }))
   } catch {
     const { galleryProjects } = await import('../data/galleryProjects')
     return galleryProjects
@@ -47,8 +69,11 @@ export async function fetchCategories(): Promise<string[]> {
   try {
     const res = await fetch(api('/api/categories'), { headers: { accept: 'application/json' }, credentials: 'include', cache: 'no-store' })
     if (!res.ok) throw new Error('Bad response')
-    const arr = (await res.json()) as Array<{ id: string; enabled?: boolean }>
-    return arr.filter((c) => c.enabled !== false).map((c) => c.id)
+    const arr = (await res.json()) as unknown
+    if (!isArray(arr)) throw new Error('Bad response')
+    const out = (arr as Array<{ id: string; enabled?: boolean }>).filter((c) => c.enabled !== false).map((c) => c.id)
+    if (out.length === 0) throw new Error('Empty')
+    return out
   } catch {
     // Fallback to static list
     const mod: { catalogCategories?: readonly string[] } = await import('../data/catalogProducts')
@@ -62,8 +87,9 @@ export async function fetchCategoriesDetailed(): Promise<CategoryDetail[]> {
   try {
     const res = await fetch(api('/api/categories'), { headers: { accept: 'application/json' }, credentials: 'include', cache: 'no-store' })
     if (!res.ok) throw new Error('Bad response')
-    const arr = (await res.json()) as CategoryDetail[]
-    return arr.map((c) => ({ ...c, image: c.image ? toAbsolute(c.image) : c.image }))
+    const arr = (await res.json()) as unknown
+    if (!isArray(arr) || arr.length === 0) throw new Error('Empty')
+    return (arr as CategoryDetail[]).map((c) => ({ ...c, image: c.image ? toAbsolute(c.image) : c.image }))
   } catch {
     // Fallback with images from homeContent if available
     const hc: { default?: { categories?: string[]; categoryImages?: Record<string, string> } } = await import('../data/homeContent.json')
