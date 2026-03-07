@@ -160,7 +160,12 @@ export default function Contact() {
               </label>
               <label className="relative block">
                 <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500">
-                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M10 6V5a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v1" />
+                    <rect x="3" y="6" width="18" height="15" rx="2" />
+                    <path d="M3 12h18" />
+                    <path d="M8 12v2a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2" />
+                  </svg>
                 </span>
                 <select value={form.service} onChange={(e) => setForm({ ...form, service: e.target.value })} className="glass-input w-full rounded-lg pl-9 px-3 py-2 text-sm outline-none ring-cyan-500 focus:ring-2">
                   <option value="">{t('contact.form.service')}</option>
@@ -171,16 +176,42 @@ export default function Contact() {
               </label>
               <label className="relative block">
                 <span className="pointer-events-none absolute left-3 top-3 text-neutral-500">
-                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22h11A2.5 2.5 0 0 0 20 19.5v-11A2.5 2.5 0 0 0 17.5 6h-11A2.5 2.5 0 0 0 4 8.5z"/></svg>
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" />
+                  </svg>
                 </span>
                 <textarea value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} placeholder={t('contact.form.message')} rows={4} className="glass-input w-full rounded-lg pl-9 px-3 py-2 text-sm outline-none ring-cyan-500 focus:ring-2" />
               </label>
               <div className="flex items-center gap-3">
                 <button disabled={status === 'sending'} type="submit" className="rounded-xl bg-cyan-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-cyan-700 disabled:opacity-60">
-                  {status === 'sending' ? '…' : t('contact.form.submit')}
+                  {status === 'sending' ? '…' : (
+                    <span className="inline-flex items-center gap-2">
+                      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                        <path d="M22 2 11 13" />
+                        <path d="M22 2 15 22l-4-9-9-4z" />
+                      </svg>
+                      <span>{t('contact.form.submit')}</span>
+                    </span>
+                  )}
                 </button>
-                {status === 'success' && <span className="text-sm text-green-700">{t('contact.form.success')}</span>}
-                {status === 'error' && <span className="text-sm text-red-700">{t('contact.form.error')}</span>}
+                {status === 'success' && (
+                  <span className="inline-flex items-center gap-2 text-sm text-green-700">
+                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                      <path d="M20 6 9 17l-5-5" />
+                    </svg>
+                    <span>{t('contact.form.success')}</span>
+                  </span>
+                )}
+                {status === 'error' && (
+                  <span className="inline-flex items-center gap-2 text-sm text-red-700">
+                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                      <circle cx="12" cy="12" r="9" />
+                      <path d="M12 8v5" />
+                      <path d="M12 16h.01" />
+                    </svg>
+                    <span>{t('contact.form.error')}</span>
+                  </span>
+                )}
               </div>
             </form>
           </article>
