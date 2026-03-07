@@ -10,61 +10,90 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import dotenv from 'dotenv'
 import nodemailer from 'nodemailer'
+import { kv } from '@vercel/kv'
+
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
-// Load env from server/.env when running locally (Render uses real env vars)
-dotenv.config({ path: path.join(__dirname, '.env') })
-const DATA_DIR = process.env.VERCEL ? path.join('/tmp', 'data') : path.join(__dirname, 'data')
-const PRODUCTS_FILE = path.join(DATA_DIR, 'products.json')
-const CATEGORIES_FILE = path.join(DATA_DIR, 'categories.json')
-const GALLERY_FILE = path.join(DATA_DIR, 'gallery.json')
-const CONTACT_FILE = path.join(DATA_DIR, 'contact_messages.json')
-const UPLOADS_DIR = process.env.VERCEL ? path.join('/tmp', 'uploads') : path.join(__dirname, 'uploads')
-const DIST_DIR = path.join(__dirname, '..', 'dist')
 
+// --- DATA ACCESS LAYER ---
+// Abstract storage to switch between File System (Dev) and Vercel KV (Prod)
+
+const DB = {
+  products: 'products',
+  gallery: 'gallery',
+  categories: 'categories',
+  contact: 'contact'
+}
+
+// Default Data
+const defaultProducts = [
+  { id: 1, model: '6108', category: 'tueren', image: '/products/6108.jpg', color: 'RAL 7016 / Dekorfolie Golden Oak', glazing: '3D Edelstahl Lisenen', handle: 'PQ 40 x 20 - 160mm', application: 'Eingangstür' },
+  { id: 2, model: '6110', category: 'tueren', image: '/products/6110.jpg', color: 'RAL 9007 / Dekorfolie Montana', glazing: 'Satiniert, durchsichtige Streifen', handle: 'PS 10 - 1200mm', application: 'Eingangstür' },
+  { id: 7, model: 'F-220', category: 'fenster', image: '/products/F-220.jpg', color: 'Anthrazit matt', glazing: '3-fach Wärmeschutz', handle: 'Alu-Griff standard', application: 'Neubau & Sanierung' }
+]
+const defaultGallery = [
+  { id: 1, category: 'fenster', image: '/gallery/1.jpg' },
+  { id: 2, category: 'tueren', image: '/gallery/2.jpg' },
+  { id: 3, category: 'rolllaeden', image: '/gallery/3.jpg' }
+]
+const defaultCategories = [
+  { id: 'fenster', enabled: true, image: '/categories/fenster.jpg' },
+  { id: 'tueren', enabled: true, image: '/categories/tueren.webp' },
+  { id: 'rolllaeden', enabled: true, image: '/categories/rolllaeden.png' },
+  { id: 'raffstore', enabled: true, image: '/categories/raffstore.webp' },
+  { id: 'garagentor', enabled: true, image: '/categories/garagentor.svg' }
+]
+
+// Read Data
+const readData = async (key, file) => {
+  if (process.env.VERCEL) {
+    // Vercel KV
+    try {
+      const data = await kv.get(key)
+      if (!data && key === DB.products) return defaultProducts
+      if (!data && key === DB.gallery) return defaultGallery
+      if (!data && key === DB.categories) return defaultCategories
+      return data || []
+    } catch (e) {
+      console.error('KV Read Error:', e)
+      return []
+    }
+  } else {
+    // Local FS
+    try {
+      return JSON.parse(await fs.readFile(file, 'utf8'))
+    } catch {
+      // Return defaults if file missing
+      if (key === DB.products) return defaultProducts
+      if (key === DB.gallery) return defaultGallery
+      if (key === DB.categories) return defaultCategories
+      return []
+    }
+  }
+}
+
+// Write Data
+const writeData = async (key, file, data) => {
+  if (process.env.VERCEL) {
+    // Vercel KV
+    await kv.set(key, data)
+  } else {
+    // Local FS
+    await fs.writeFile(file, JSON.stringify(data, null, 2))
+  }
+}
+
+// Ensure Data (Local Only)
 const ensureDataFiles = async () => {
+  if (process.env.VERCEL) return // No FS init needed on Vercel
+  
   await fs.mkdir(DATA_DIR, { recursive: true })
-  // On Vercel, we can't persist data. We start with empty/default state every time the function wakes up.
-  const defaultProducts = [
-    { id: 1, model: '6108', category: 'tueren', image: '/products/6108.jpg', color: 'RAL 7016 / Dekorfolie Golden Oak', glazing: '3D Edelstahl Lisenen', handle: 'PQ 40 x 20 - 160mm', application: 'Eingangstür' },
-    { id: 2, model: '6110', category: 'tueren', image: '/products/6110.jpg', color: 'RAL 9007 / Dekorfolie Montana', glazing: 'Satiniert, durchsichtige Streifen', handle: 'PS 10 - 1200mm', application: 'Eingangstür' },
-    { id: 7, model: 'F-220', category: 'fenster', image: '/products/F-220.jpg', color: 'Anthrazit matt', glazing: '3-fach Wärmeschutz', handle: 'Alu-Griff standard', application: 'Neubau & Sanierung' }
-  ]
-  const defaultGallery = [
-    { id: 1, category: 'fenster', image: '/gallery/1.jpg' },
-    { id: 2, category: 'tueren', image: '/gallery/2.jpg' },
-    { id: 3, category: 'rolllaeden', image: '/gallery/3.jpg' }
-  ]
   try { await fs.access(PRODUCTS_FILE) } catch { await fs.writeFile(PRODUCTS_FILE, JSON.stringify(defaultProducts, null, 2)) }
   try { await fs.access(GALLERY_FILE) } catch { await fs.writeFile(GALLERY_FILE, JSON.stringify(defaultGallery, null, 2)) }
-  try {
-    await fs.access(CATEGORIES_FILE)
-  } catch {
-    const defaultCategories = [
-    { id: 'fenster', enabled: true, image: '/categories/fenster.jpg' },
-    { id: 'tueren', enabled: true, image: '/categories/tueren.webp' },
-    { id: 'rolllaeden', enabled: true, image: '/categories/rolllaeden.png' },
-    { id: 'raffstore', enabled: true, image: '/categories/raffstore.webp' },
-    { id: 'garagentor', enabled: true, image: '/categories/garagentor.svg' }
-  ]
-    await fs.writeFile(CATEGORIES_FILE, JSON.stringify(defaultCategories, null, 2))
-  }
+  try { await fs.access(CATEGORIES_FILE) } catch { await fs.writeFile(CATEGORIES_FILE, JSON.stringify(defaultCategories, null, 2)) }
   try { await fs.access(CONTACT_FILE) } catch { await fs.writeFile(CONTACT_FILE, '[]') }
 }
 
-if (process.env.VERCEL) {
-  // Ensure default data exists in /tmp on every cold start
-  ensureDataFiles().catch(console.error)
-}
-
-const readJson = async (file) => {
-  try {
-    return JSON.parse(await fs.readFile(file, 'utf8'))
-  } catch {
-    return []
-  }
-}
-const writeJson = async (file, data) => fs.writeFile(file, JSON.stringify(data, null, 2))
 
 const app = express()
 app.set('etag', false)
@@ -217,12 +246,19 @@ app.post('/api/auth/login', async (req, res) => {
 
   // Set JWT Cookie for Vercel
   const token = jwt.sign({ user: ADMIN_USERNAME }, SESSION_SECRET, { expiresIn: '2h' })
-  res.cookie('auth_token', token, {
-    httpOnly: true,
-    secure: IS_PROD,
-    sameSite: 'lax',
-    maxAge: 2 * 60 * 60 * 1000 // 2 hours
-  })
+  
+  // Use res.cookie only if available (Express)
+  if (res.cookie) {
+    res.cookie('auth_token', token, {
+      httpOnly: true,
+      secure: IS_PROD,
+      sameSite: 'lax',
+      maxAge: 2 * 60 * 60 * 1000 // 2 hours
+    })
+  } else {
+    // Fallback: Set header manually if res.cookie is missing (unlikely in Express but safe)
+    res.setHeader('Set-Cookie', `auth_token=${token}; HttpOnly; Path=/; Max-Age=7200; SameSite=Lax${IS_PROD ? '; Secure' : ''}`)
+  }
 
   res.json({ ok: true, username: ADMIN_USERNAME })
 })
@@ -249,118 +285,122 @@ app.get('/api/auth/me', (req, res) => {
 
 // Products
 app.get('/api/products', async (_req, res) => {
-  const items = await readJson(PRODUCTS_FILE)
+  const items = await readData(DB.products, PRODUCTS_FILE)
   res.json(items)
 })
-
 app.get('/api/products/:id', async (req, res) => {
-  const items = await readJson(PRODUCTS_FILE)
+  const items = await readData(DB.products, PRODUCTS_FILE)
   const item = items.find((p) => p.id === Number(req.params.id))
   if (!item) return res.status(404).json({ error: 'Not found' })
   res.json(item)
 })
-
-app.post('/api/products', requireAuth, async (req, res) => {
-  const items = await readJson(PRODUCTS_FILE)
-  const nextId = items.length ? Math.max(...items.map((i) => i.id)) + 1 : 1
-  const newItem = { id: nextId, ...req.body }
+app.post('/api/products', requireAuth, upload.single('image'), async (req, res) => {
+  const items = await readData(DB.products, PRODUCTS_FILE)
+  const newItem = {
+    id: Date.now(),
+    ...req.body,
+    image: req.file ? `/uploads/${req.file.filename}` : req.body.image
+  }
   items.push(newItem)
-  await writeJson(PRODUCTS_FILE, items)
+  await writeData(DB.products, PRODUCTS_FILE, items)
   res.status(201).json(newItem)
 })
-
-app.put('/api/products/:id', requireAuth, async (req, res) => {
-  const items = await readJson(PRODUCTS_FILE)
-  const idx = items.findIndex((p) => p.id === Number(req.params.id))
-  if (idx === -1) return res.status(404).json({ error: 'Not found' })
-  items[idx] = { ...items[idx], ...req.body, id: Number(req.params.id) }
-  await writeJson(PRODUCTS_FILE, items)
-  res.json(items[idx])
-})
-
 app.delete('/api/products/:id', requireAuth, async (req, res) => {
-  const items = await readJson(PRODUCTS_FILE)
-  const next = items.filter((p) => p.id !== Number(req.params.id))
-  await writeJson(PRODUCTS_FILE, next)
-  res.status(204).end()
+  let items = await readData(DB.products, PRODUCTS_FILE)
+  items = items.filter((p) => String(p.id) !== String(req.params.id))
+  await writeData(DB.products, PRODUCTS_FILE, items)
+  res.json({ ok: true })
+})
+app.put('/api/products/:id', requireAuth, upload.single('image'), async (req, res) => {
+  let items = await readData(DB.products, PRODUCTS_FILE)
+  const idx = items.findIndex((p) => String(p.id) === String(req.params.id))
+  if (idx === -1) return res.status(404).json({ error: 'Not found' })
+  
+  items[idx] = {
+    ...items[idx],
+    ...req.body,
+    image: req.file ? `/uploads/${req.file.filename}` : items[idx].image
+  }
+  await writeData(DB.products, PRODUCTS_FILE, items)
+  res.json(items[idx])
 })
 
 // Categories
 app.get('/api/categories', async (_req, res) => {
-  const items = await readJson(CATEGORIES_FILE)
+  const items = await readData(DB.categories, CATEGORIES_FILE)
   res.json(items)
 })
 app.post('/api/categories', requireAuth, async (req, res) => {
   const { id, image } = req.body || {}
   const slug = String(id || '').trim().toLowerCase()
   if (!/^[a-z0-9-]+$/.test(slug)) return res.status(400).json({ error: 'Invalid id' })
-  const items = await readJson(CATEGORIES_FILE)
+  const items = await readData(DB.categories, CATEGORIES_FILE)
   if (items.find((c) => c.id === slug)) return res.status(409).json({ error: 'Already exists' })
   const entry = { id: slug, enabled: true, image: typeof image === 'string' ? image : '' }
   items.push(entry)
-  await writeJson(CATEGORIES_FILE, items)
+  await writeData(DB.categories, CATEGORIES_FILE, items)
   res.status(201).json(entry)
 })
 app.put('/api/categories/:id', requireAuth, async (req, res) => {
-  const items = await readJson(CATEGORIES_FILE)
+  const items = await readData(DB.categories, CATEGORIES_FILE)
   const idx = items.findIndex((c) => c.id === req.params.id)
   if (idx === -1) return res.status(404).json({ error: 'Not found' })
-  const enabled = typeof req.body?.enabled === 'boolean' ? req.body.enabled : items[idx].enabled
-  const image = typeof req.body?.image === 'string' ? req.body.image : items[idx].image
-  items[idx] = { ...items[idx], enabled, image }
-  await writeJson(CATEGORIES_FILE, items)
+  items[idx] = { ...items[idx], ...req.body }
+  await writeData(DB.categories, CATEGORIES_FILE, items)
   res.json(items[idx])
 })
 app.delete('/api/categories/:id', requireAuth, async (req, res) => {
-  const items = await readJson(CATEGORIES_FILE)
+  const items = await readData(DB.categories, CATEGORIES_FILE)
   const next = items.filter((c) => c.id !== req.params.id)
   if (next.length === items.length) return res.status(404).json({ error: 'Not found' })
-  await writeJson(CATEGORIES_FILE, next)
+  await writeData(DB.categories, CATEGORIES_FILE, next)
   res.status(204).end()
 })
 
 // Gallery
 app.get('/api/gallery/projects', async (_req, res) => {
-  res.json(await readJson(GALLERY_FILE))
+  const items = await readData(DB.gallery, GALLERY_FILE)
+  res.json(items)
 })
-
-app.post('/api/gallery/projects', requireAuth, async (req, res) => {
-  const items = await readJson(GALLERY_FILE)
-  const nextId = items.length ? Math.max(...items.map((i) => i.id)) + 1 : 1
-  const newItem = { id: nextId, ...req.body }
+app.post('/api/gallery/projects', requireAuth, upload.single('image'), async (req, res) => {
+  const items = await readData(DB.gallery, GALLERY_FILE)
+  const newItem = {
+    id: Date.now(),
+    category: req.body.category,
+    image: req.file ? `/uploads/${req.file.filename}` : ''
+  }
   items.push(newItem)
-  await writeJson(GALLERY_FILE, items)
+  await writeData(DB.gallery, GALLERY_FILE, items)
   res.status(201).json(newItem)
 })
 app.delete('/api/gallery/projects/:id', requireAuth, async (req, res) => {
-  const items = await readJson(GALLERY_FILE)
-  const next = items.filter((p) => p.id !== Number(req.params.id))
-  await writeJson(GALLERY_FILE, next)
-  res.status(204).end()
+  let items = await readData(DB.gallery, GALLERY_FILE)
+  items = items.filter((g) => String(g.id) !== String(req.params.id))
+  await writeData(DB.gallery, GALLERY_FILE, items)
+  res.json({ ok: true })
 })
 
-// Contact form
+// Contact Messages
+app.get('/api/contact', requireAuth, async (_req, res) => {
+  const items = await readData(DB.contact, CONTACT_FILE)
+  items.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
+  res.json(items)
+})
+app.delete('/api/contact/:id', requireAuth, async (req, res) => {
+  let items = await readData(DB.contact, CONTACT_FILE)
+  items = items.filter((c) => String(c.id) !== String(req.params.id))
+  await writeData(DB.contact, CONTACT_FILE, items)
+  res.json({ ok: true })
+})
 app.post('/api/contact', async (req, res) => {
-  const { firstName, lastName, email, phone, service, message } = req.body || {}
-  const errors = []
-  if (!firstName || typeof firstName !== 'string') errors.push('firstName')
-  if (!lastName || typeof lastName !== 'string') errors.push('lastName')
-  if (!email || typeof email !== 'string') errors.push('email')
-  if (!message || typeof message !== 'string') errors.push('message')
-  if (errors.length) return res.status(400).json({ error: 'Invalid payload', fields: errors })
-  const entry = {
-    id: Date.now(),
-    firstName: String(firstName).trim(),
-    lastName: String(lastName).trim(),
-    email: String(email).trim(),
-    phone: String(phone || '').trim(),
-    service: String(service || '').trim(),
-    message: String(message).trim(),
-    createdAt: new Date().toISOString()
-  }
-  const items = await readJson(CONTACT_FILE)
+  const entry = { id: Date.now(), ...req.body, createdAt: new Date().toISOString() }
+  
+  // Save to DB
+  let items = await readData(DB.contact, CONTACT_FILE)
   items.push(entry)
-  await writeJson(CONTACT_FILE, items)
+  await writeData(DB.contact, CONTACT_FILE, items)
+
+  // Send Email
   try {
     const host = process.env.SMTP_HOST
     const user = process.env.SMTP_USER
@@ -379,17 +419,7 @@ app.post('/api/contact', async (req, res) => {
   // Vercel: Data is not persisted, but email is sent.
   res.status(201).json({ ok: true })
 })
-app.get('/api/contact', requireAuth, async (_req, res) => {
-  const items = await readJson(CONTACT_FILE)
-  items.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
-  res.json(items)
-})
-app.delete('/api/contact/:id', requireAuth, async (req, res) => {
-  const items = await readJson(CONTACT_FILE)
-  const next = items.filter((m) => String(m.id) !== String(req.params.id))
-  await writeJson(CONTACT_FILE, next)
-  res.status(204).end()
-})
+
 
 // Upload endpoint (auth required)
 app.post('/api/uploads', requireAuth, upload.single('file'), (req, res) => {
