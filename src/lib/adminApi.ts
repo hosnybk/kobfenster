@@ -76,13 +76,21 @@ export async function logout() {
 }
 
 export async function uploadFile(file: File): Promise<{ url: string }> {
+  if (window.location.hostname.includes('vercel.app')) {
+    const mod = (await import('@vercel/blob/client')) as unknown as {
+      upload: (pathname: string, file: File, opts: { access: 'public' | 'private'; handleUploadUrl: string }) => Promise<{ url: string }>
+    }
+    const blob = await mod.upload(file.name, file, { access: 'public', handleUploadUrl: '/api/blob/upload' })
+    return { url: blob.url }
+  }
+
   const form = new FormData()
   form.append('file', file)
   const res = await fetch(api('/api/uploads'), { method: 'POST', body: form, credentials: 'include' })
   await assertOk(res, 'Upload failed')
-  const out = await res.json()
+  const out = (await res.json().catch(() => null)) as unknown
   const base = getApiBase()
-  const url: string = out?.url || ''
+  const url = isRecord(out) && typeof out.url === 'string' ? out.url : ''
   const abs = url.startsWith('http') ? url : `${base}${url}`
   return { url: abs }
 }

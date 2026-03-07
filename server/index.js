@@ -11,7 +11,7 @@ import { fileURLToPath } from 'url'
 import dotenv from 'dotenv'
 import nodemailer from 'nodemailer'
 import { kv } from '@vercel/kv'
-import { put } from '@vercel/blob'
+import { handleUpload } from '@vercel/blob/client'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -177,6 +177,20 @@ const requireAuth = (req, res, next) => {
   }
   
   return res.status(401).json({ error: 'Unauthorized' })
+}
+
+const getFullUrl = (req) => {
+  const proto = (req.headers['x-forwarded-proto'] || 'https').toString()
+  const host = (req.headers['x-forwarded-host'] || req.headers.host || '').toString()
+  return `${proto}://${host}${req.originalUrl}`
+}
+
+const toWebHeaders = (nodeHeaders) => {
+  const h = new Headers()
+  for (const [k, v] of Object.entries(nodeHeaders || {})) {
+    if (typeof v === 'string') h.set(k, v)
+  }
+  return h
 }
 
 // Uploads
@@ -434,6 +448,36 @@ app.post('/api/contact', async (req, res) => {
   res.status(201).json({ ok: true })
 })
 
+app.post('/api/blob/upload', requireAuth, async (req, res) => {
+  try {
+    const token = process.env.BLOB_READ_WRITE_TOKEN
+    if (!token) return res.status(500).json({ error: 'Blob not configured (missing BLOB_READ_WRITE_TOKEN)' })
+
+    const body = req.body || {}
+    const request = new Request(getFullUrl(req), {
+      method: 'POST',
+      headers: toWebHeaders({ ...req.headers, 'content-type': 'application/json' }),
+      body: JSON.stringify(body)
+    })
+
+    const jsonResponse = await handleUpload({
+      token,
+      request,
+      body,
+      onBeforeGenerateToken: async () => ({
+        allowedContentTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml'],
+        maximumSizeInBytes: 50 * 1024 * 1024
+      }),
+      onUploadCompleted: async () => {}
+    })
+
+    return res.json(jsonResponse)
+  } catch (e) {
+    console.error('Blob client upload handler error:', e)
+    return res.status(400).json({ error: e instanceof Error ? e.message : 'Upload handler error' })
+  }
+})
+
 
 // Upload endpoint (auth required)
 app.post('/api/uploads', requireAuth, (req, res, next) => {
@@ -450,33 +494,7 @@ app.post('/api/uploads', requireAuth, (req, res, next) => {
   
   try {
     if (process.env.VERCEL) {
-       console.log('Vercel environment detected. File in memory.')
-       
-       if (!req.file.buffer) {
-          throw new Error('File buffer missing')
-       }
-
-       // Upload to Vercel Blob (CDN)
-       try {
-         if (!process.env.BLOB_READ_WRITE_TOKEN) {
-            throw new Error('No BLOB_READ_WRITE_TOKEN configured')
-         }
-         const blob = await put(req.file.originalname, req.file.buffer, {
-           access: 'public',
-           token: process.env.BLOB_READ_WRITE_TOKEN
-         })
-         console.log('Upload successful (Vercel Blob):', blob.url)
-         return res.status(201).json({ url: blob.url })
-       } catch (blobError) {
-         console.error('Vercel Blob upload failed (or skipped):', blobError)
-         
-         // Fallback to Base64 Data URI if Blob fails (or token missing)
-         console.log('Falling back to Base64 Data URI')
-         const base64 = req.file.buffer.toString('base64')
-         const mime = req.file.mimetype
-         const dataUrl = `data:${mime};base64,${base64}`
-         return res.status(201).json({ url: dataUrl })
-       }
+      return res.status(410).json({ error: 'Use /api/blob/upload (client upload) on Vercel' })
     }
 
     // Local environment: Write buffer to disk
