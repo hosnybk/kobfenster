@@ -154,15 +154,36 @@ app.get('/api/health', (_req, res) => {
 app.post('/api/auth/login', async (req, res) => {
   console.log('Login attempt body:', req.body)
   const { username, password } = req.body || {}
+  
   if (!username || !password) {
     console.error('Missing credentials', { username, password })
     return res.status(400).json({ error: 'Missing credentials' })
   }
-  if (username !== ADMIN_USERNAME) return res.status(401).json({ error: 'Invalid credentials' })
-  if (!ADMIN_PASSWORD_HASH) return res.status(500).json({ error: 'Server password not configured' })
+
+  // Debug: Log environment status (DO NOT log actual passwords in real production logs if possible, but helpful for debugging now)
+  console.log('Auth check:', { 
+    inputUser: username, 
+    expectedUser: ADMIN_USERNAME, 
+    hasHash: Boolean(ADMIN_PASSWORD_HASH),
+    envPassLength: process.env.ADMIN_PASSWORD ? process.env.ADMIN_PASSWORD.length : 0
+  })
+
+  if (username !== ADMIN_USERNAME) return res.status(401).json({ error: 'Invalid credentials (user)' })
+  
+  // Fallback for debugging if hash fails or is missing on Vercel
+  if (!ADMIN_PASSWORD_HASH) {
+     console.error('Server password not configured properly')
+     return res.status(500).json({ error: 'Server password not configured' })
+  }
+
   const ok = await bcrypt.compare(password, ADMIN_PASSWORD_HASH)
-  if (!ok) return res.status(401).json({ error: 'Invalid credentials' })
+  if (!ok) {
+    console.error('Password mismatch')
+    return res.status(401).json({ error: 'Invalid credentials (pass)' })
+  }
+
   req.session.user = ADMIN_USERNAME
+  await new Promise((resolve) => req.session.save(resolve)) // Force save session
   res.json({ ok: true, username: ADMIN_USERNAME })
 })
 app.post('/api/auth/logout', (req, res) => {
