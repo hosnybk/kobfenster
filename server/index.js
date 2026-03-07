@@ -12,17 +12,18 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 // Load env from server/.env when running locally (Render uses real env vars)
 dotenv.config({ path: path.join(__dirname, '.env') })
-const DATA_DIR = path.join(__dirname, 'data')
+const DATA_DIR = process.env.VERCEL ? path.join('/tmp', 'data') : path.join(__dirname, 'data')
 const PRODUCTS_FILE = path.join(DATA_DIR, 'products.json')
 const CATEGORIES_FILE = path.join(DATA_DIR, 'categories.json')
 const GALLERY_FILE = path.join(DATA_DIR, 'gallery.json')
 const CONTACT_FILE = path.join(DATA_DIR, 'contact_messages.json')
-const UPLOADS_DIR = path.join(__dirname, 'uploads')
+const UPLOADS_DIR = process.env.VERCEL ? path.join('/tmp', 'uploads') : path.join(__dirname, 'uploads')
 const DIST_DIR = path.join(__dirname, '..', 'dist')
 
 const ensureDataFiles = async () => {
   await fs.mkdir(DATA_DIR, { recursive: true })
-  const defaultProducts = [
+  // On Vercel, we can't persist data. We start with empty/default state every time the function wakes up.
+  // ... (default data initialization)
     { id: 1, model: '6108', category: 'tueren', image: '/products/6108.jpg', color: 'RAL 7016 / Dekorfolie Golden Oak', glazing: '3D Edelstahl Lisenen', handle: 'PQ 40 x 20 - 160mm', application: 'Eingangstür' },
     { id: 2, model: '6110', category: 'tueren', image: '/products/6110.jpg', color: 'RAL 9007 / Dekorfolie Montana', glazing: 'Satiniert, durchsichtige Streifen', handle: 'PS 10 - 1200mm', application: 'Eingangstür' },
     { id: 7, model: 'F-220', category: 'fenster', image: '/products/F-220.jpg', color: 'Anthrazit matt', glazing: '3-fach Wärmeschutz', handle: 'Alu-Griff standard', application: 'Neubau & Sanierung' }
@@ -49,7 +50,18 @@ const ensureDataFiles = async () => {
   try { await fs.access(CONTACT_FILE) } catch { await fs.writeFile(CONTACT_FILE, '[]') }
 }
 
-const readJson = async (file) => JSON.parse(await fs.readFile(file, 'utf8'))
+if (process.env.VERCEL) {
+  // Ensure default data exists in /tmp on every cold start
+  ensureDataFiles().catch(console.error)
+}
+
+const readJson = async (file) => {
+  try {
+    return JSON.parse(await fs.readFile(file, 'utf8'))
+  } catch {
+    return []
+  }
+}
 const writeJson = async (file, data) => fs.writeFile(file, JSON.stringify(data, null, 2))
 
 const app = express()
@@ -96,7 +108,12 @@ const requireAuth = (req, res, next) => {
 }
 
 // Uploads
-await fs.mkdir(UPLOADS_DIR, { recursive: true })
+if (!process.env.VERCEL) {
+  await fs.mkdir(UPLOADS_DIR, { recursive: true })
+} else {
+  // On Vercel, /tmp is ephemeral
+  fs.mkdir(UPLOADS_DIR, { recursive: true }).catch(() => {})
+}
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, UPLOADS_DIR),
   filename: (_req, file, cb) => {
@@ -283,7 +300,10 @@ app.post('/api/contact', async (req, res) => {
       const text = `Von: ${entry.firstName} ${entry.lastName}\nE-Mail: ${entry.email}\nTelefon: ${entry.phone}\nService: ${entry.service}\n\n${entry.message}\n\n${entry.createdAt}`
       await transporter.sendMail({ from: `"KOB Fenster" <${user}>`, to, subject, text })
     }
-  } catch {}
+  } catch (e) {
+    console.error('Email error:', e)
+  }
+  // Vercel: Data is not persisted, but email is sent.
   res.status(201).json({ ok: true })
 })
 app.get('/api/contact', requireAuth, async (_req, res) => {
@@ -313,8 +333,17 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 const PORT = process.env.PORT || 5174
-ensureDataFiles().then(() => {
-  app.listen(PORT, () => {
-    console.log(`API server running on http://localhost:${PORT}`)
+
+// Export for Vercel
+if (process.env.VERCEL) {
+  // On Vercel, we can't write to filesystem (except /tmp which is ephemeral)
+  // We need to mock ensureDataFiles or handle it gracefully
+} else {
+  ensureDataFiles().then(() => {
+    app.listen(PORT, () => {
+      console.log(`API server running on http://localhost:${PORT}`)
+    })
   })
-})
+}
+
+export default app
