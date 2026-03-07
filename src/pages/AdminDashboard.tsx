@@ -253,7 +253,8 @@ export default function AdminDashboard() {
                 formEl.reset()
               } catch (err) {
                 console.error('Category creation failed:', err)
-                alert(`Error: ${(err as Error).message}`)
+                const msg = (err as any).message || JSON.stringify(err)
+                alert(`Error: ${msg}`)
               }
             }}>
               <input name="id" placeholder={t('admin.categories.slugPlaceholder')} className="glass-input rounded-lg px-3 py-1.5 text-sm w-32" />
@@ -293,10 +294,17 @@ export default function AdminDashboard() {
                     <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
                       const f = e.target.files?.[0]
                       if (!f) return
-                      const up = await uploadFile(f)
-                      const next = await updateCategory(c.id, { image: up.url })
-                      setCategories((arr) => arr.map((x) => (x.id === c.id ? next : x)))
-                      e.currentTarget.value = ''
+                      try {
+                        const up = await uploadFile(f)
+                        const next = await updateCategory(c.id, { image: up.url })
+                        setCategories((arr) => arr.map((x) => (x.id === c.id ? next : x)))
+                      } catch (err) {
+                        console.error('Category update failed:', err)
+                        const msg = (err as any).message || JSON.stringify(err)
+                        alert(`Upload failed: ${msg}`)
+                      } finally {
+                        e.currentTarget.value = ''
+                      }
                     }} />
                   </label>
                   <button className="text-xs text-red-500 hover:text-red-700 font-medium flex items-center gap-1" onClick={async () => {
