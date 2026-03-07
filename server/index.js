@@ -64,6 +64,13 @@ const getDefaultsForKey = (key) => {
   return []
 }
 
+const requireKvForWrites = (_req, res, next) => {
+  if (process.env.VERCEL && !isKvConfigured()) {
+    return res.status(503).json({ error: 'KV not configured. Connect Vercel KV (Storage) and enable for this environment.' })
+  }
+  return next()
+}
+
 // Read Data
 const readData = async (key, file) => {
   if (process.env.VERCEL) {
@@ -141,6 +148,11 @@ const IS_PROD = process.env.NODE_ENV === 'production'
 app.set('trust proxy', 1)
 
 app.use(cookieParser(SESSION_SECRET))
+
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/')) res.set('Cache-Control', 'no-store')
+  next()
+})
 
 // Only use session in dev or Hostinger. Vercel uses JWT cookie.
 if (!process.env.VERCEL) {
@@ -326,7 +338,7 @@ app.get('/api/products/:id', async (req, res) => {
   if (!item) return res.status(404).json({ error: 'Not found' })
   res.json(item)
 })
-app.post('/api/products', requireAuth, upload.single('image'), async (req, res) => {
+app.post('/api/products', requireAuth, requireKvForWrites, upload.single('image'), async (req, res) => {
   const items = await readData(DB.products, PRODUCTS_FILE)
   const newItem = {
     id: Date.now(),
@@ -337,13 +349,13 @@ app.post('/api/products', requireAuth, upload.single('image'), async (req, res) 
   await writeData(DB.products, PRODUCTS_FILE, items)
   res.status(201).json(newItem)
 })
-app.delete('/api/products/:id', requireAuth, async (req, res) => {
+app.delete('/api/products/:id', requireAuth, requireKvForWrites, async (req, res) => {
   let items = await readData(DB.products, PRODUCTS_FILE)
   items = items.filter((p) => String(p.id) !== String(req.params.id))
   await writeData(DB.products, PRODUCTS_FILE, items)
   res.json({ ok: true })
 })
-app.put('/api/products/:id', requireAuth, upload.single('image'), async (req, res) => {
+app.put('/api/products/:id', requireAuth, requireKvForWrites, upload.single('image'), async (req, res) => {
   let items = await readData(DB.products, PRODUCTS_FILE)
   const idx = items.findIndex((p) => String(p.id) === String(req.params.id))
   if (idx === -1) return res.status(404).json({ error: 'Not found' })
@@ -370,7 +382,7 @@ app.get('/api/categories', async (_req, res) => {
   const items = await readData(DB.categories, CATEGORIES_FILE)
   res.json(items)
 })
-app.post('/api/categories', requireAuth, async (req, res) => {
+app.post('/api/categories', requireAuth, requireKvForWrites, async (req, res) => {
   const { id, image } = req.body || {}
   const slug = String(id || '').trim().toLowerCase()
   if (!/^[a-z0-9-]+$/.test(slug)) return res.status(400).json({ error: 'Invalid id' })
@@ -381,7 +393,7 @@ app.post('/api/categories', requireAuth, async (req, res) => {
   await writeData(DB.categories, CATEGORIES_FILE, items)
   res.status(201).json(entry)
 })
-app.put('/api/categories/:id', requireAuth, async (req, res) => {
+app.put('/api/categories/:id', requireAuth, requireKvForWrites, async (req, res) => {
   const items = await readData(DB.categories, CATEGORIES_FILE)
   const idx = items.findIndex((c) => c.id === req.params.id)
   if (idx === -1) return res.status(404).json({ error: 'Not found' })
@@ -389,7 +401,7 @@ app.put('/api/categories/:id', requireAuth, async (req, res) => {
   await writeData(DB.categories, CATEGORIES_FILE, items)
   res.json(items[idx])
 })
-app.delete('/api/categories/:id', requireAuth, async (req, res) => {
+app.delete('/api/categories/:id', requireAuth, requireKvForWrites, async (req, res) => {
   const items = await readData(DB.categories, CATEGORIES_FILE)
   const next = items.filter((c) => c.id !== req.params.id)
   if (next.length === items.length) return res.status(404).json({ error: 'Not found' })
@@ -402,7 +414,7 @@ app.get('/api/gallery/projects', async (_req, res) => {
   const items = await readData(DB.gallery, GALLERY_FILE)
   res.json(items)
 })
-app.post('/api/gallery/projects', requireAuth, upload.single('image'), async (req, res) => {
+app.post('/api/gallery/projects', requireAuth, requireKvForWrites, upload.single('image'), async (req, res) => {
   const items = await readData(DB.gallery, GALLERY_FILE)
   const newItem = {
     id: Date.now(),
@@ -413,7 +425,7 @@ app.post('/api/gallery/projects', requireAuth, upload.single('image'), async (re
   await writeData(DB.gallery, GALLERY_FILE, items)
   res.status(201).json(newItem)
 })
-app.delete('/api/gallery/projects/:id', requireAuth, async (req, res) => {
+app.delete('/api/gallery/projects/:id', requireAuth, requireKvForWrites, async (req, res) => {
   let items = await readData(DB.gallery, GALLERY_FILE)
   items = items.filter((g) => String(g.id) !== String(req.params.id))
   await writeData(DB.gallery, GALLERY_FILE, items)
@@ -426,7 +438,7 @@ app.get('/api/contact', requireAuth, async (_req, res) => {
   items.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
   res.json(items)
 })
-app.delete('/api/contact/:id', requireAuth, async (req, res) => {
+app.delete('/api/contact/:id', requireAuth, requireKvForWrites, async (req, res) => {
   let items = await readData(DB.contact, CONTACT_FILE)
   items = items.filter((c) => String(c.id) !== String(req.params.id))
   await writeData(DB.contact, CONTACT_FILE, items)

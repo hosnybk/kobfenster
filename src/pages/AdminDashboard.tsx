@@ -102,21 +102,35 @@ export default function AdminDashboard() {
   const onSaveProduct = async (event: React.FormEvent) => {
     event.preventDefault()
     if (!editing) return
-    const isUpdate = Boolean(editing.id)
-    const payload = { ...editing } as Partial<CatalogProduct>
-    if (isUpdate) {
-      const saved = await updateProduct(editing.id as number, payload)
-      setProducts((arr) => arr.map((p) => (p.id === saved.id ? saved : p)))
-    } else {
-      const saved = await createProduct(payload)
-      setProducts((arr) => [...arr, saved])
+    try {
+      setActionError(null)
+      const isUpdate = Boolean(editing.id)
+      const payload = { ...editing } as Partial<CatalogProduct>
+      if (isUpdate) {
+        const saved = await updateProduct(editing.id as number, payload)
+        setProducts((arr) => arr.map((p) => (p.id === saved.id ? saved : p)))
+      } else {
+        const saved = await createProduct(payload)
+        setProducts((arr) => [...arr, saved])
+      }
+      setEditing(null)
+    } catch (e) {
+      const msg = getErrMsg(e)
+      setActionError(msg)
+      alert(msg)
     }
-    setEditing(null)
   }
 
   const onDeleteProduct = async (id: number) => {
-    await deleteProduct(id)
-    setProducts((arr) => arr.filter((p) => p.id !== id))
+    try {
+      setActionError(null)
+      await deleteProduct(id)
+      setProducts((arr) => arr.filter((p) => p.id !== id))
+    } catch (e) {
+      const msg = getErrMsg(e)
+      setActionError(msg)
+      alert(msg)
+    }
   }
 
   const onCreateGallery = async (event: React.FormEvent) => {
@@ -126,10 +140,17 @@ export default function AdminDashboard() {
     const category = String(form.get('category') || 'fenster') as Category
     const file = (form.get('image') as File) || null
     if (!file || !file.name) return
-    const image = await onUpload(file)
-    const item = await createGalleryItem({ category, image })
-    setGallery((arr) => [...arr, item])
-    formEl.reset()
+    try {
+      setActionError(null)
+      const image = await onUpload(file)
+      const item = await createGalleryItem({ category, image })
+      setGallery((arr) => [...arr, item])
+      formEl.reset()
+    } catch (e) {
+      const msg = getErrMsg(e)
+      setActionError(msg)
+      alert(msg)
+    }
   }
 
   if (isLoading) {
@@ -206,7 +227,17 @@ export default function AdminDashboard() {
                 <img src={g.image} alt={`${g.category} ${g.id}`} className="h-36 w-full object-cover" onError={(e) => (e.currentTarget.src = '/vite.svg')} />
                 <div className="p-3 flex items-center justify-between">
                   <span className="text-sm">{g.category}</span>
-                  <button className="glass-chip rounded-lg px-3 py-1 text-xs" onClick={() => deleteGalleryItem(g.id).then(() => setGallery((arr) => arr.filter((x) => x.id !== g.id)))}>{t('admin.dashboard.delete')}</button>
+                  <button className="glass-chip rounded-lg px-3 py-1 text-xs" onClick={async () => {
+                    try {
+                      setActionError(null)
+                      await deleteGalleryItem(g.id)
+                      setGallery((arr) => arr.filter((x) => x.id !== g.id))
+                    } catch (e) {
+                      const msg = getErrMsg(e)
+                      setActionError(msg)
+                      alert(msg)
+                    }
+                  }}>{t('admin.dashboard.delete')}</button>
                 </div>
               </article>
             ))}
@@ -334,8 +365,15 @@ export default function AdminDashboard() {
                   </label>
                   <button className="text-xs text-red-500 hover:text-red-700 font-medium flex items-center gap-1" onClick={async () => {
                     if (!confirm(`Delete category "${c.id}" ?`)) return
-                    await deleteCategory(c.id)
-                    setCategories((arr) => arr.filter((x) => x.id !== c.id))
+                    try {
+                      setActionError(null)
+                      await deleteCategory(c.id)
+                      setCategories((arr) => arr.filter((x) => x.id !== c.id))
+                    } catch (e) {
+                      const msg = getErrMsg(e)
+                      setActionError(msg)
+                      alert(msg)
+                    }
                   }}>
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                     {t('admin.categories.delete')}

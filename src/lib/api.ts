@@ -22,7 +22,7 @@ const toAbsolute = (url: string): string => {
 
 export async function fetchProducts(): Promise<CatalogProduct[]> {
   try {
-    const res = await fetch(api('/api/products'), { headers: { accept: 'application/json' }, credentials: 'include' })
+    const res = await fetch(api('/api/products'), { headers: { accept: 'application/json' }, credentials: 'include', cache: 'no-store' })
     if (!res.ok) throw new Error('Bad response')
     return (await res.json()) as CatalogProduct[]
   } catch {
@@ -33,7 +33,7 @@ export async function fetchProducts(): Promise<CatalogProduct[]> {
 
 export async function fetchGallery(): Promise<Array<{ id: number; category: string; image: string }>> {
   try {
-    const res = await fetch(api('/api/gallery/projects'), { headers: { accept: 'application/json' }, credentials: 'include' })
+    const res = await fetch(api('/api/gallery/projects'), { headers: { accept: 'application/json' }, credentials: 'include', cache: 'no-store' })
     if (!res.ok) throw new Error('Bad response')
     const items = (await res.json()) as Array<{ id: number; category: string; image: string }>
     return items.map((it) => ({ ...it, image: toAbsolute(it.image) }))
@@ -45,7 +45,7 @@ export async function fetchGallery(): Promise<Array<{ id: number; category: stri
 
 export async function fetchCategories(): Promise<string[]> {
   try {
-    const res = await fetch(api('/api/categories'), { headers: { accept: 'application/json' }, credentials: 'include' })
+    const res = await fetch(api('/api/categories'), { headers: { accept: 'application/json' }, credentials: 'include', cache: 'no-store' })
     if (!res.ok) throw new Error('Bad response')
     const arr = (await res.json()) as Array<{ id: string; enabled?: boolean }>
     return arr.filter((c) => c.enabled !== false).map((c) => c.id)
@@ -60,7 +60,7 @@ export async function fetchCategories(): Promise<string[]> {
 export type CategoryDetail = { id: string; enabled?: boolean; image?: string }
 export async function fetchCategoriesDetailed(): Promise<CategoryDetail[]> {
   try {
-    const res = await fetch(api('/api/categories'), { headers: { accept: 'application/json' }, credentials: 'include' })
+    const res = await fetch(api('/api/categories'), { headers: { accept: 'application/json' }, credentials: 'include', cache: 'no-store' })
     if (!res.ok) throw new Error('Bad response')
     const arr = (await res.json()) as CategoryDetail[]
     return arr.map((c) => ({ ...c, image: c.image ? toAbsolute(c.image) : c.image }))
@@ -83,7 +83,7 @@ export type ContactPayload = {
 }
 export async function sendContact(payload: ContactPayload): Promise<{ ok: boolean }> {
   const headers = { 'content-type': 'application/json' }
-  const res = await fetch(api('/api/contact'), { method: 'POST', headers, body: JSON.stringify(payload), credentials: 'include' })
+  const res = await fetch(api('/api/contact'), { method: 'POST', headers, body: JSON.stringify(payload), credentials: 'include', cache: 'no-store' })
   if (!res.ok) {
     const b = await res.json().catch(() => ({}))
     throw new Error(b?.error || 'Contact submission failed')
