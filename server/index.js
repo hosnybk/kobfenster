@@ -305,7 +305,7 @@ app.post('/api/products', requireAuth, upload.single('image'), async (req, res) 
   const newItem = {
     id: Date.now(),
     ...req.body,
-    image: req.file ? `/uploads/${req.file.filename}` : req.body.image
+    image: req.file ? `/uploads/${req.file.filename}` : (req.body.image || '')
   }
   items.push(newItem)
   await writeData(DB.products, PRODUCTS_FILE, items)
@@ -322,10 +322,18 @@ app.put('/api/products/:id', requireAuth, upload.single('image'), async (req, re
   const idx = items.findIndex((p) => String(p.id) === String(req.params.id))
   if (idx === -1) return res.status(404).json({ error: 'Not found' })
   
+  // Logic: 
+  // 1. If file uploaded -> use file path
+  // 2. If body.image provided -> use body.image (URL)
+  // 3. Else -> keep existing image
+  let newImage = items[idx].image
+  if (req.file) newImage = `/uploads/${req.file.filename}`
+  else if (req.body.image) newImage = req.body.image
+
   items[idx] = {
     ...items[idx],
     ...req.body,
-    image: req.file ? `/uploads/${req.file.filename}` : items[idx].image
+    image: newImage
   }
   await writeData(DB.products, PRODUCTS_FILE, items)
   res.json(items[idx])
@@ -373,7 +381,7 @@ app.post('/api/gallery/projects', requireAuth, upload.single('image'), async (re
   const newItem = {
     id: Date.now(),
     category: req.body.category,
-    image: req.file ? `/uploads/${req.file.filename}` : ''
+    image: req.file ? `/uploads/${req.file.filename}` : (req.body.image || '')
   }
   items.push(newItem)
   await writeData(DB.gallery, GALLERY_FILE, items)
@@ -450,6 +458,9 @@ app.post('/api/uploads', requireAuth, (req, res, next) => {
 
        // Upload to Vercel Blob (CDN)
        try {
+         if (!process.env.BLOB_READ_WRITE_TOKEN) {
+            throw new Error('No BLOB_READ_WRITE_TOKEN configured')
+         }
          const blob = await put(req.file.originalname, req.file.buffer, {
            access: 'public',
            token: process.env.BLOB_READ_WRITE_TOKEN
@@ -457,7 +468,7 @@ app.post('/api/uploads', requireAuth, (req, res, next) => {
          console.log('Upload successful (Vercel Blob):', blob.url)
          return res.status(201).json({ url: blob.url })
        } catch (blobError) {
-         console.error('Vercel Blob upload failed:', blobError)
+         console.error('Vercel Blob upload failed (or skipped):', blobError)
          
          // Fallback to Base64 Data URI if Blob fails (or token missing)
          console.log('Falling back to Base64 Data URI')
