@@ -30,7 +30,10 @@ export default function Admin() {
       setSuccess(true)
       setError(null)
       // Redirect to dashboard, ensuring session is set
-      navigate('/admin/dashboard', { replace: true })
+      // Adding a small delay to ensure cookie is set
+      setTimeout(() => {
+         navigate('/admin/dashboard', { replace: true })
+      }, 500)
     } catch (e) {
       const err = e as { message?: string }
       setSuccess(false)
