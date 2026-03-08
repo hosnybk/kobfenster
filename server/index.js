@@ -532,7 +532,8 @@ app.post('/api/blob/upload', async (req, res) => {
       body,
       onBeforeGenerateToken: async () => ({
         allowedContentTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml'],
-        maximumSizeInBytes: 50 * 1024 * 1024
+        maximumSizeInBytes: 50 * 1024 * 1024,
+        addRandomSuffix: true
       }),
       onUploadCompleted: async () => {}
     })
