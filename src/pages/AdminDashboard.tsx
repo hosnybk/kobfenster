@@ -61,7 +61,6 @@ export default function AdminDashboard() {
   useEffect(() => {
     let active = true
     authMe().then((me) => {
-      console.log('Auth check result:', me)
       if (!active) return
       if (!me.authenticated) {
         navigate('/admin', { replace: true })
@@ -78,12 +77,11 @@ export default function AdminDashboard() {
         })
         .catch((err) => {
           console.error('Dashboard load error:', err)
-          // Still show dashboard even if some data fails
           setIsLoading(false)
         })
-    }).catch(e => {
-       console.error('Auth check failed:', e)
-       navigate('/admin', { replace: true })
+    }).catch((e) => {
+      console.error('Auth check failed:', e)
+      navigate('/admin', { replace: true })
     })
     return () => {
       active = false
@@ -280,17 +278,17 @@ export default function AdminDashboard() {
             ))}
           </div>
           <form className="mt-4 flex flex-wrap items-end gap-2" onSubmit={onCreateGallery}>
-            <select value={galleryDraft.category} onChange={(e) => setGalleryDraft((d) => ({ ...d, category: e.target.value as Category }))} className="glass-input rounded-lg px-3 py-2 text-sm">
+            <select value={galleryDraft.category} onChange={(e) => setGalleryDraft((d) => ({ ...d, category: e.target.value as Category }))} className="glass-input rounded-lg px-3 py-2 text-sm w-full sm:w-auto">
               <option value="fenster">{t('catalog.filters.fenster')}</option>
               <option value="tueren">{t('catalog.filters.tueren')}</option>
               <option value="rolllaeden">{t('catalog.filters.rolllaeden')}</option>
               <option value="raffstore">{t('catalog.filters.raffstore')}</option>
             </select>
-            <input value={galleryDraft.location?.[locale] || ''} onChange={(e) => setGalleryDraft((d) => ({ ...d, location: { ...d.location, [locale]: e.target.value } }))} type="text" placeholder={t('admin.gallery.location')} className="glass-input rounded-lg px-3 py-2 text-sm" />
-            <input value={galleryDraft.title?.[locale] || ''} onChange={(e) => setGalleryDraft((d) => ({ ...d, title: { ...d.title, [locale]: e.target.value } }))} type="text" placeholder={t('admin.gallery.title')} className="glass-input rounded-lg px-3 py-2 text-sm" />
-            <input value={galleryDraft.description?.[locale] || ''} onChange={(e) => setGalleryDraft((d) => ({ ...d, description: { ...d.description, [locale]: e.target.value } }))} type="text" placeholder={t('admin.gallery.description')} className="glass-input rounded-lg px-3 py-2 text-sm flex-1 min-w-[220px]" />
-            <input ref={galleryFileRef} type="file" accept="image/*" className="glass-input rounded-lg px-3 py-2 text-sm" onChange={(e) => setGalleryDraft((d) => ({ ...d, imageFile: e.target.files?.[0] || null }))} />
-            <button type="submit" className="glass-chip rounded-lg px-3 py-2 text-sm font-semibold">{t('admin.dashboard.add')}</button>
+            <input value={galleryDraft.location?.[locale] || ''} onChange={(e) => setGalleryDraft((d) => ({ ...d, location: { ...d.location, [locale]: e.target.value } }))} type="text" placeholder={t('admin.gallery.location')} className="glass-input rounded-lg px-3 py-2 text-sm w-full sm:w-44" />
+            <input value={galleryDraft.title?.[locale] || ''} onChange={(e) => setGalleryDraft((d) => ({ ...d, title: { ...d.title, [locale]: e.target.value } }))} type="text" placeholder={t('admin.gallery.title')} className="glass-input rounded-lg px-3 py-2 text-sm w-full sm:w-56" />
+            <input value={galleryDraft.description?.[locale] || ''} onChange={(e) => setGalleryDraft((d) => ({ ...d, description: { ...d.description, [locale]: e.target.value } }))} type="text" placeholder={t('admin.gallery.description')} className="glass-input rounded-lg px-3 py-2 text-sm w-full sm:flex-1 sm:min-w-[220px]" />
+            <input ref={galleryFileRef} type="file" accept="image/*" className="glass-input rounded-lg px-3 py-2 text-sm w-full sm:w-auto" onChange={(e) => setGalleryDraft((d) => ({ ...d, imageFile: e.target.files?.[0] || null }))} />
+            <button type="submit" className="glass-chip rounded-lg px-3 py-2 text-sm font-semibold w-full sm:w-auto">{t('admin.dashboard.add')}</button>
             <p className="basis-full text-xs text-neutral-600">{t('admin.gallery.hint')}</p>
           </form>
         </section>
@@ -300,23 +298,23 @@ export default function AdminDashboard() {
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4" onClick={() => setEditing(null)}>
           <article className="glass-surface max-w-2xl w-full rounded-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-white/70 px-4 py-3">
-              <h3 className="text-lg font-semibold text-neutral-900">{editing.id ? 'Modifier le produit' : 'Nouveau produit'}</h3>
-              <button className="glass-chip rounded-lg px-3 py-1 text-sm" onClick={() => setEditing(null)}>Fermer</button>
+              <h3 className="text-lg font-semibold text-neutral-900">{editing.id ? t('admin.products.editTitle') : t('admin.products.newTitle')}</h3>
+              <button className="glass-chip rounded-lg px-3 py-1 text-sm" onClick={() => setEditing(null)}>{t('admin.dashboard.close')}</button>
             </div>
             <form className="p-4 grid gap-3 sm:grid-cols-2" onSubmit={onSaveProduct}>
-              <input className="glass-input rounded-lg px-3 py-2 text-sm" placeholder="Modèle" value={editing.model || ''} onChange={(e) => setEditing({ ...editing, model: e.target.value })} />
+              <input className="glass-input rounded-lg px-3 py-2 text-sm" placeholder={t('admin.products.fields.model')} value={editing.model || ''} onChange={(e) => setEditing({ ...editing, model: e.target.value })} />
               <select className="glass-input rounded-lg px-3 py-2 text-sm" value={(editing.category as unknown as string) || enabledCategories[0] || ''} onChange={(e) => setEditing({ ...editing, category: e.target.value } as Partial<CatalogProduct>)}>
                 {enabledCategories.map((c) => (
                   <option key={c} value={c}>{t(`catalog.filters.${c}`) || c}</option>
                 ))}
               </select>
-              <input className="glass-input rounded-lg px-3 py-2 text-sm" placeholder="Image URL" value={editing.image || ''} onChange={(e) => setEditing({ ...editing, image: e.target.value })} />
-              <input className="glass-input rounded-lg px-3 py-2 text-sm" placeholder="Couleur" value={editing.color || ''} onChange={(e) => setEditing({ ...editing, color: e.target.value })} />
-              <input className="glass-input rounded-lg px-3 py-2 text-sm" placeholder="Vitrage" value={editing.glazing || ''} onChange={(e) => setEditing({ ...editing, glazing: e.target.value })} />
-              <input className="glass-input rounded-lg px-3 py-2 text-sm" placeholder="Poignée" value={editing.handle || ''} onChange={(e) => setEditing({ ...editing, handle: e.target.value })} />
-              <input className="glass-input rounded-lg px-3 py-2 text-sm" placeholder="Application" value={editing.application || ''} onChange={(e) => setEditing({ ...editing, application: e.target.value })} />
+              <input className="glass-input rounded-lg px-3 py-2 text-sm" placeholder={t('admin.products.fields.imageUrl')} value={editing.image || ''} onChange={(e) => setEditing({ ...editing, image: e.target.value })} />
+              <input className="glass-input rounded-lg px-3 py-2 text-sm" placeholder={t('admin.products.fields.color')} value={editing.color || ''} onChange={(e) => setEditing({ ...editing, color: e.target.value })} />
+              <input className="glass-input rounded-lg px-3 py-2 text-sm" placeholder={t('admin.products.fields.glazing')} value={editing.glazing || ''} onChange={(e) => setEditing({ ...editing, glazing: e.target.value })} />
+              <input className="glass-input rounded-lg px-3 py-2 text-sm" placeholder={t('admin.products.fields.handle')} value={editing.handle || ''} onChange={(e) => setEditing({ ...editing, handle: e.target.value })} />
+              <input className="glass-input rounded-lg px-3 py-2 text-sm" placeholder={t('admin.products.fields.application')} value={editing.application || ''} onChange={(e) => setEditing({ ...editing, application: e.target.value })} />
               <input type="file" accept="image/*" onChange={async (e) => { const f = e.target.files?.[0]; if (f) setEditing({ ...editing, image: await onUpload(f) }) }} />
-              <input className="glass-input rounded-lg px-3 py-2 text-sm sm:col-span-2" placeholder="Datasheet URL" value={editing.datasheet || ''} onChange={(e) => setEditing({ ...editing, datasheet: e.target.value })} />
+              <input className="glass-input rounded-lg px-3 py-2 text-sm sm:col-span-2" placeholder={t('admin.products.fields.datasheetUrl')} value={editing.datasheet || ''} onChange={(e) => setEditing({ ...editing, datasheet: e.target.value })} />
               <input type="file" accept="image/*,application/pdf" onChange={async (e) => { const f = e.target.files?.[0]; if (f) setEditing({ ...editing, datasheet: await onUpload(f) }) }} />
               <div className="sm:col-span-2 flex items-center gap-2">
                 <button type="submit" className="glass-chip rounded-lg px-4 py-2 font-semibold">{editing.id ? t('admin.dashboard.save') : t('admin.dashboard.create')}</button>
@@ -354,9 +352,9 @@ export default function AdminDashboard() {
                 alert(`Error: ${msg}`)
               }
             }}>
-              <input name="id" placeholder={t('admin.categories.slugPlaceholder')} className="glass-input rounded-lg px-3 py-1.5 text-sm w-32" />
-              <input name="image" type="file" accept="image/*" className="glass-input rounded-lg px-3 py-1.5 text-sm w-48" />
-              <button type="submit" className="glass-chip rounded-lg px-3 py-1.5 text-sm font-medium hover:bg-white/50 transition-colors">{t('admin.categories.add')}</button>
+              <input name="id" placeholder={t('admin.categories.slugPlaceholder')} className="glass-input rounded-lg px-3 py-1.5 text-sm w-full sm:w-40" />
+              <input name="image" type="file" accept="image/*" className="glass-input rounded-lg px-3 py-1.5 text-sm w-full sm:w-56" />
+              <button type="submit" className="glass-chip rounded-lg px-3 py-1.5 text-sm font-medium hover:bg-white/50 transition-colors w-full sm:w-auto">{t('admin.categories.add')}</button>
             </form>
           </div>
           <div className="mt-4 grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
@@ -368,11 +366,11 @@ export default function AdminDashboard() {
                        {c.image ? (
                          <img src={c.image} alt={c.id} className="h-full w-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />
                        ) : (
-                         <span className="text-xs text-gray-400">No img</span>
+                         <span className="text-xs text-gray-400">{t('admin.categories.noImage')}</span>
                        )}
                     </div>
                     <div>
-                      <span className="block text-sm font-bold capitalize">{c.id}</span>
+                      <span className="block text-sm font-bold capitalize">{t(`catalog.filters.${c.id}`) || c.id}</span>
                       <label className="inline-flex items-center gap-2 text-xs text-gray-600 mt-1 cursor-pointer select-none">
                         <input type="checkbox" className="accent-blue-600 h-3 w-3" checked={c.enabled !== false} onChange={async (e) => {
                           try {
@@ -415,7 +413,7 @@ export default function AdminDashboard() {
                     }} />
                   </label>
                   <button className="text-xs text-red-500 hover:text-red-700 font-medium flex items-center gap-1" onClick={async () => {
-                    if (!confirm(`Delete category "${c.id}" ?`)) return
+                    if (!confirm(t('admin.categories.deleteConfirm', { id: t(`catalog.filters.${c.id}`) || c.id }))) return
                     try {
                       setActionError(null)
                       await deleteCategory(c.id)
@@ -434,7 +432,7 @@ export default function AdminDashboard() {
               </div>
             ))}
           </div>
-          <p className="mt-2 text-xs text-neutral-600">Note: Renaming une catégorie n’est pas supporté ici.</p>
+          <p className="mt-2 text-xs text-neutral-600">{t('admin.categories.renameNote')}</p>
         </div>
       </section>
     </MotionPage>

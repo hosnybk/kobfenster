@@ -17,7 +17,7 @@ const resources = {
       home: {
         hero: {
           title: 'High-performance windows and doors for modern living',
-          subtitle: 'Discover a professional installation and assembly service for windows, doors, and blinds in Oesterich-Winkel, offering tailored solutions, quality workmanship, and reliable installation to enhance the comfort and appearance of your home or business. 🏡🔧',
+          subtitle: 'Discover a professional installation and assembly service for windows, doors, and blinds in Oestrich-Winkel, offering tailored solutions, quality workmanship, and reliable installation to enhance the comfort and appearance of your home or business.',
           catalogButton: 'View catalog',
           quoteButton: 'Request a quote'
         },
@@ -26,9 +26,9 @@ const resources = {
           catalogLink: 'Catalog',
           galleryLink: 'Gallery',
           items: {
-            fenster: { title: 'Fenster' },
-            tueren: { title: 'Türen' },
-            rolllaeden: { title: 'Rollläden' },
+            fenster: { title: 'Windows' },
+            tueren: { title: 'Doors' },
+            rolllaeden: { title: 'Shutters' },
             raffstore: { title: 'Raffstore' },
             garagentor: { title: 'Garage door' }
           }
@@ -74,9 +74,9 @@ const resources = {
         noProjects: 'No projects yet',
         filters: {
           all: 'All',
-          fenster: 'Fenster',
-          tueren: 'Türen',
-          rolllaeden: 'Rollläden',
+          fenster: 'Windows',
+          tueren: 'Doors',
+          rolllaeden: 'Shutters',
           raffstore: 'Raffstore',
           garagentor: 'Garage door'
         },
@@ -93,7 +93,7 @@ const resources = {
           },
           3: {
             city: 'Frankfurt',
-            title: 'Rollläden installation',
+            title: 'Shutter installation',
             description: 'Thermal and privacy upgrade for a family house with motorized operation.'
           },
           4: {
@@ -113,7 +113,7 @@ const resources = {
           },
           7: {
             city: 'Eltville',
-            title: 'Smart Rollläden system',
+            title: 'Smart shutter system',
             description: 'Connected shutter setup with simple control and robust outdoor performance.'
           },
           8: {
@@ -137,10 +137,16 @@ const resources = {
         pdfTag: 'PDF',
         filters: {
           all: 'All',
-          fenster: 'Fenster',
-          tueren: 'Türen',
-          rolllaeden: 'Rollläden',
-          raffstore: 'Raffstore'
+          fenster: 'Windows',
+          tueren: 'Doors',
+          rolllaeden: 'Shutters',
+          raffstore: 'Raffstore',
+          garagentor: 'Garage door',
+          haustueren: 'Entrance doors',
+          insektenschutz: 'Insect screens',
+          markisen: 'Awnings',
+          innenturen: 'Interior doors',
+          terrassenueberdachungen: 'Patio covers'
         },
         specs: {
           color: 'Color',
@@ -239,7 +245,7 @@ const resources = {
       },
       contact: {
         badge: 'Contact',
-        title: 'Fenster, Türen, Rollläden and Raffstore service',
+        title: 'Windows, doors, shutters and raffstore service',
         subtitle: 'Tell us about your project and we will get back to you quickly with clear recommendations and a tailored quote.',
         quickContact: {
           title: 'Quick contact',
@@ -312,6 +318,19 @@ const resources = {
           close: 'Close',
           loading: 'Loading…'
         },
+        products: {
+          newTitle: 'New product',
+          editTitle: 'Edit product',
+          fields: {
+            model: 'Model',
+            imageUrl: 'Image URL',
+            color: 'Color',
+            glazing: 'Glazing',
+            handle: 'Handle',
+            application: 'Application',
+            datasheetUrl: 'Datasheet URL'
+          }
+        },
         messages: {
           title: 'Messages',
           refresh: 'Refresh',
@@ -322,9 +341,12 @@ const resources = {
           add: 'Add',
           delete: 'Delete',
           image: 'Image',
+          noImage: 'No image',
           enabled: 'enabled',
           disabled: 'disabled',
-          slugPlaceholder: 'slug e.g. fenster'
+          slugPlaceholder: 'Slug e.g. fenster',
+          renameNote: "Note: Renaming a category isn't supported here.",
+          deleteConfirm: 'Delete category "{{id}}"?'
         },
         gallery: {
           hint: 'Switch language to edit the other translation.',
@@ -356,7 +378,7 @@ const resources = {
       home: {
         hero: {
           title: 'Hochwertige Fenster und Türen für modernes Wohnen',
-          subtitle: 'Entdecken Sie einen professionellen Installations- und Montageservice für Fenster, Türen und Rollläden in Oestrich-Winkel, der maßgeschneiderte Lösungen, hochwertige Verarbeitung und eine zuverlässige Installation bietet, um den Komfort und das Erscheinungsbild Ihres Hauses oder Unternehmens zu verbessern. 🏡🔧',
+          subtitle: 'Entdecken Sie einen professionellen Installations- und Montageservice für Fenster, Türen und Rollläden in Oestrich-Winkel, der maßgeschneiderte Lösungen, hochwertige Verarbeitung und eine zuverlässige Installation bietet, um den Komfort und das Erscheinungsbild Ihres Hauses oder Unternehmens zu verbessern.',
           catalogButton: 'Katalog ansehen',
           quoteButton: 'Angebot anfordern'
         },
@@ -479,7 +501,13 @@ const resources = {
           fenster: 'Fenster',
           tueren: 'Türen',
           rolllaeden: 'Rollläden',
-          raffstore: 'Raffstore'
+          raffstore: 'Raffstore',
+          garagentor: 'Garagentor',
+          haustueren: 'Haustüren',
+          insektenschutz: 'Insektenschutz',
+          markisen: 'Markisen',
+          innenturen: 'Innentüren',
+          terrassenueberdachungen: 'Terrassenüberdachungen'
         },
         specs: {
           color: 'Farbe',
@@ -651,6 +679,19 @@ const resources = {
           close: 'Schließen',
           loading: 'Laden…'
         },
+        products: {
+          newTitle: 'Neues Produkt',
+          editTitle: 'Produkt bearbeiten',
+          fields: {
+            model: 'Modell',
+            imageUrl: 'Bild-URL',
+            color: 'Farbe',
+            glazing: 'Verglasung',
+            handle: 'Griff',
+            application: 'Anwendung',
+            datasheetUrl: 'Datenblatt-URL'
+          }
+        },
         messages: {
           title: 'Nachrichten',
           refresh: 'Aktualisieren',
@@ -661,9 +702,12 @@ const resources = {
           add: 'Hinzufügen',
           delete: 'Löschen',
           image: 'Bild',
+          noImage: 'Kein Bild',
           enabled: 'aktiv',
           disabled: 'inaktiv',
-          slugPlaceholder: 'Slug z. B. fenster'
+          slugPlaceholder: 'Slug z. B. fenster',
+          renameNote: 'Hinweis: Das Umbenennen einer Kategorie wird hier nicht unterstützt.',
+          deleteConfirm: 'Kategorie "{{id}}" löschen?'
         },
         gallery: {
           hint: 'Sprache wechseln, um die andere Übersetzung zu bearbeiten.',

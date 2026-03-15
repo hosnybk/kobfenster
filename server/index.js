@@ -234,13 +234,13 @@ if (process.env.NODE_ENV !== 'production') {
 <style>body{font-family:system-ui,Segoe UI,Arial,sans-serif;padding:2rem;color:#0f172a}a{color:#0369a1;text-decoration:none}</style></head>
 <body>
   <h1>KOB Fenster API</h1>
-  <p>API en cours d'exécution. Endpoints utiles :</p>
+  <p>API is running. Useful endpoints:</p>
   <ul>
     <li><a href="/api/health">/api/health</a></li>
     <li><a href="/api/products">/api/products</a></li>
     <li><a href="/api/gallery/projects">/api/gallery/projects</a></li>
   </ul>
-  <p>En développement, l'app front tourne sur <code>http://localhost:5173</code> et proxy <code>/api</code> vers ce serveur.</p>
+  <p>In development, the frontend runs on <code>http://localhost:5173</code> and proxies <code>/api</code> to this server.</p>
 </body></html>`)
   })
 }
@@ -255,27 +255,15 @@ app.get('/api/health', (_req, res) => {
 
 // Auth
 app.post('/api/auth/login', async (req, res) => {
-  console.log('Login attempt body:', req.body)
   const { username, password } = req.body || {}
   
   if (!username || !password) {
-    console.error('Missing credentials', { username, password })
     return res.status(400).json({ error: 'Missing credentials' })
   }
 
-  // Debug: Log environment status (DO NOT log actual passwords in real production logs if possible, but helpful for debugging now)
-  console.log('Auth check:', { 
-    inputUser: username, 
-    expectedUser: ADMIN_USERNAME, 
-    hasHash: Boolean(ADMIN_PASSWORD_HASH),
-    envPassLength: process.env.ADMIN_PASSWORD ? process.env.ADMIN_PASSWORD.length : 0
-  })
-
   if (username !== ADMIN_USERNAME) return res.status(401).json({ error: 'Invalid credentials (user)' })
   
-  // Fallback for debugging if hash fails or is missing on Vercel
   if (!ADMIN_PASSWORD_HASH) {
-     console.error('Server password not configured properly')
      return res.status(500).json({ error: 'Server password not configured' })
   }
 

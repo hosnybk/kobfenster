@@ -47,7 +47,7 @@ export default function AdminMessages() {
                 <path d="M3 10.5 12 3l9 7.5" />
                 <path d="M5 9.5V21h14V9.5" />
               </svg>
-              <span>Dashboard</span>
+              <span>{t('admin.dashboard.title')}</span>
             </button>
             <button className="glass-chip rounded-lg px-3 py-1.5 text-sm inline-flex items-center gap-2" onClick={async () => setItems(await listContactMessages())}>
               <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
@@ -81,7 +81,7 @@ export default function AdminMessages() {
                       <span>{new Date(m.createdAt).toLocaleString()}</span>
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center justify-end gap-2">
                     <a href={`mailto:${m.email}`} className="glass-chip rounded-lg px-2 py-1 text-xs inline-flex items-center gap-2">
                       <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                         <path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" />
