@@ -131,6 +131,22 @@ export async function deleteCategory(id: string): Promise<void> {
   await assertOk(res, 'Delete category failed')
 }
 
+export type PdfCatalog = { id: number; title: string; subtitle: string; cover?: string; pdf: string }
+export async function listCatalogs(): Promise<PdfCatalog[]> {
+  const res = await fetch(api('/api/catalogs'), { ...cred })
+  await assertOk(res, 'List catalogs failed')
+  return res.json()
+}
+export async function createCatalog(payload: Omit<PdfCatalog, 'id'>): Promise<PdfCatalog> {
+  const res = await fetch(api('/api/catalogs'), { method: 'POST', headers, body: json(payload), ...cred })
+  await assertOk(res, 'Create catalog failed')
+  return res.json()
+}
+export async function deleteCatalog(id: number): Promise<void> {
+  const res = await fetch(api(`/api/catalogs/${id}`), { method: 'DELETE', ...cred })
+  await assertOk(res, 'Delete catalog failed')
+}
+
 export async function listProducts(): Promise<CatalogProduct[]> {
   const res = await fetch(api('/api/products'), { ...cred })
   return res.json()

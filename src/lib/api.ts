@@ -42,6 +42,29 @@ function toLocalizedText(value: unknown): { de?: string; en?: string } | undefin
 
 const DEMO_IMAGE = '/vite.svg'
 
+export type PdfCatalog = { id: number; title: string; subtitle: string; cover: string; pdf: string }
+export async function fetchCatalogs(): Promise<PdfCatalog[]> {
+  try {
+    const res = await fetch(api('/api/catalogs'), { headers: { accept: 'application/json' }, credentials: 'include', cache: 'no-store' })
+    if (!res.ok) throw new Error('Bad response')
+    const items = (await res.json()) as unknown
+    if (!isArray(items) || items.length === 0) throw new Error('Empty')
+    return (items as Array<Record<string, unknown>>).map((raw) => {
+      const it = raw as { id: number; title: string; subtitle: string; cover?: string; pdf: string }
+      return {
+        id: Number(it.id),
+        title: String(it.title || ''),
+        subtitle: String(it.subtitle || ''),
+        cover: it.cover ? toAbsolute(String(it.cover)) : DEMO_IMAGE,
+        pdf: it.pdf ? toAbsolute(String(it.pdf)) : ''
+      }
+    })
+  } catch {
+    const mod: { pdfCatalogs?: PdfCatalog[] } = await import('../data/pdfCatalogs')
+    return (mod.pdfCatalogs || []).map((c) => ({ ...c, cover: c.cover || DEMO_IMAGE }))
+  }
+}
+
 export async function fetchProducts(): Promise<CatalogProduct[]> {
   try {
     const res = await fetch(api('/api/products'), { headers: { accept: 'application/json' }, credentials: 'include', cache: 'no-store' })

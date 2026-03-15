@@ -306,6 +306,7 @@ const resources = {
         dashboard: {
           title: 'Dashboard',
           products: 'Products',
+          catalogs: 'Catalogues',
           gallery: 'Gallery',
           newProduct: 'New product',
           logout: 'Sign out',
@@ -347,6 +348,14 @@ const resources = {
           slugPlaceholder: 'Slug e.g. fenster',
           renameNote: "Note: Renaming a category isn't supported here.",
           deleteConfirm: 'Delete category "{{id}}"?'
+        },
+        catalogs: {
+          hint: 'PDF is required. Cover image is optional.',
+          openPdf: 'Open PDF',
+          fields: {
+            title: 'Title',
+            subtitle: 'Subtitle'
+          }
         },
         gallery: {
           hint: 'Switch language to edit the other translation.',
@@ -667,6 +676,7 @@ const resources = {
         dashboard: {
           title: 'Dashboard',
           products: 'Produkte',
+          catalogs: 'Kataloge',
           gallery: 'Galerie',
           newProduct: 'Neues Produkt',
           logout: 'Abmelden',
@@ -708,6 +718,14 @@ const resources = {
           slugPlaceholder: 'Slug z. B. fenster',
           renameNote: 'Hinweis: Das Umbenennen einer Kategorie wird hier nicht unterstützt.',
           deleteConfirm: 'Kategorie "{{id}}" löschen?'
+        },
+        catalogs: {
+          hint: 'PDF ist erforderlich. Cover-Bild ist optional.',
+          openPdf: 'PDF öffnen',
+          fields: {
+            title: 'Titel',
+            subtitle: 'Untertitel'
+          }
         },
         gallery: {
           hint: 'Sprache wechseln, um die andere Übersetzung zu bearbeiten.',

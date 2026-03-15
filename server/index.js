@@ -23,6 +23,7 @@ const DIST_DIR = path.join(__dirname, 'dist')
 const PRODUCTS_FILE = path.join(DATA_DIR, 'products.json')
 const GALLERY_FILE = path.join(DATA_DIR, 'gallery.json')
 const CATEGORIES_FILE = path.join(DATA_DIR, 'categories.json')
+const CATALOGS_FILE = path.join(DATA_DIR, 'catalogs.json')
 const CONTACT_FILE = path.join(DATA_DIR, 'contact.json')
 
 // --- DATA ACCESS LAYER ---
@@ -32,6 +33,7 @@ const DB = {
   products: 'products',
   gallery: 'gallery',
   categories: 'categories',
+  catalogs: 'catalogs',
   contact: 'contact'
 }
 
@@ -58,6 +60,16 @@ const defaultCategories = [
   { id: 'innenturen', enabled: true, image: '/categories/default.svg' },
   { id: 'terrassenueberdachungen', enabled: true, image: '/categories/default.svg' }
 ]
+const defaultCatalogs = [
+  { id: 1, title: 'Katalog Eingangstüren', subtitle: 'Despiro (DE)', cover: '/catalog-covers/1.jpg', pdf: '/catalogs/Katalog_Eingangsturen-Despiro_DE.pdf' },
+  { id: 2, title: 'Katalog Innentüren', subtitle: 'Innenbereich (DE)', cover: '/catalog-covers/2.jpg', pdf: '/catalogs/Katalog_Innenturen_DE.pdf' },
+  { id: 3, title: 'Katalog Holz', subtitle: 'Holzserie (DE)', cover: '/catalog-covers/3.jpg', pdf: '/catalogs/Katalog_Holz_DE.pdf' },
+  { id: 4, title: 'Katalog Stahl', subtitle: 'Stahltüren (DE)', cover: '/catalog-covers/4.jpg', pdf: '/catalogs/Katalog_Stahl_DE.pdf' },
+  { id: 5, title: 'Katalog Aluminium', subtitle: 'Aluminiumserie (DE)', cover: '/catalog-covers/5.jpg', pdf: '/catalogs/Katalog_Aluminium_DE.pdf' },
+  { id: 6, title: 'Katalog Garagentor', subtitle: 'Garagentore (DE)', cover: '/catalog-covers/6.jpg', pdf: '/catalogs/Katalog_Garagentor_DE.pdf' },
+  { id: 7, title: 'Katalog Fassadenjalousien', subtitle: 'Sonnenschutz (DE)', cover: '/catalog-covers/7.jpg', pdf: '/catalogs/Katalog_Fassadenjalousien_DE.pdf' },
+  { id: 8, title: 'Katalog Produkt mini', subtitle: 'Produktauswahl (DE)', cover: '/catalog-covers/8.jpg', pdf: '/catalogs/Katalog_Produkt-mini_DE.pdf' }
+]
 
 const isKvConfigured = () =>
   Boolean(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN)
@@ -66,6 +78,7 @@ const getDefaultsForKey = (key) => {
   if (key === DB.products) return defaultProducts
   if (key === DB.gallery) return defaultGallery
   if (key === DB.categories) return defaultCategories
+  if (key === DB.catalogs) return defaultCatalogs
   return []
 }
 
@@ -86,6 +99,7 @@ const readData = async (key, file) => {
       if (!data && key === DB.products) return defaultProducts
       if (!data && key === DB.gallery) return defaultGallery
       if (!data && key === DB.categories) return defaultCategories
+      if (!data && key === DB.catalogs) return defaultCatalogs
       return data || []
     } catch (e) {
       console.error('KV Read Error:', e)
@@ -100,6 +114,7 @@ const readData = async (key, file) => {
       if (key === DB.products) return defaultProducts
       if (key === DB.gallery) return defaultGallery
       if (key === DB.categories) return defaultCategories
+      if (key === DB.catalogs) return defaultCatalogs
       return []
     }
   }
@@ -130,6 +145,7 @@ const ensureDataFiles = async () => {
   try { await fs.access(PRODUCTS_FILE) } catch { await fs.writeFile(PRODUCTS_FILE, JSON.stringify(defaultProducts, null, 2)) }
   try { await fs.access(GALLERY_FILE) } catch { await fs.writeFile(GALLERY_FILE, JSON.stringify(defaultGallery, null, 2)) }
   try { await fs.access(CATEGORIES_FILE) } catch { await fs.writeFile(CATEGORIES_FILE, JSON.stringify(defaultCategories, null, 2)) }
+  try { await fs.access(CATALOGS_FILE) } catch { await fs.writeFile(CATALOGS_FILE, JSON.stringify(defaultCatalogs, null, 2)) }
   try { await fs.access(CONTACT_FILE) } catch { await fs.writeFile(CONTACT_FILE, '[]') }
 }
 
@@ -370,6 +386,31 @@ app.put('/api/products/:id', requireAuth, requireKvForWrites, upload.single('ima
   res.json(items[idx])
 })
 
+app.get('/api/catalogs', async (_req, res) => {
+  const items = await readData(DB.catalogs, CATALOGS_FILE)
+  res.json(items)
+})
+app.post('/api/catalogs', requireAuth, requireKvForWrites, async (req, res) => {
+  const { title, subtitle, cover, pdf } = req.body || {}
+  const safeTitle = String(title || '').trim()
+  const safeSubtitle = String(subtitle || '').trim()
+  const safeCover = typeof cover === 'string' ? cover.trim() : ''
+  const safePdf = String(pdf || '').trim()
+  if (!safeTitle) return res.status(400).json({ error: 'Missing title' })
+  if (!safePdf) return res.status(400).json({ error: 'Missing pdf' })
+  const items = await readData(DB.catalogs, CATALOGS_FILE)
+  const entry = { id: Date.now(), title: safeTitle, subtitle: safeSubtitle, cover: safeCover, pdf: safePdf }
+  items.push(entry)
+  await writeData(DB.catalogs, CATALOGS_FILE, items)
+  res.status(201).json(entry)
+})
+app.delete('/api/catalogs/:id', requireAuth, requireKvForWrites, async (req, res) => {
+  let items = await readData(DB.catalogs, CATALOGS_FILE)
+  items = items.filter((c) => String(c.id) !== String(req.params.id))
+  await writeData(DB.catalogs, CATALOGS_FILE, items)
+  res.json({ ok: true })
+})
+
 // Categories
 const normalizeSlug = (input) => {
   const raw = String(input || '').trim().toLowerCase()
@@ -537,7 +578,7 @@ app.post('/api/blob/upload', async (req, res) => {
       request,
       body,
       onBeforeGenerateToken: async () => ({
-        allowedContentTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml'],
+        allowedContentTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml', 'application/pdf'],
         maximumSizeInBytes: 50 * 1024 * 1024,
         addRandomSuffix: true
       }),

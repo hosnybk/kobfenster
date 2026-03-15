@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import MotionPage from '../components/MotionPage'
 import type { CatalogProduct } from '../data/catalogProducts'
-import { authMe, logout, listProducts, listGallery, createProduct, updateProduct, deleteProduct, uploadFile, createGalleryItem, deleteGalleryItem, listCategories, createCategory, updateCategory, deleteCategory, listContactMessages, type AdminCategory, type GalleryProject } from '../lib/adminApi'
+import { authMe, logout, listProducts, listGallery, createProduct, updateProduct, deleteProduct, uploadFile, createGalleryItem, deleteGalleryItem, listCategories, createCategory, updateCategory, deleteCategory, listContactMessages, listCatalogs, createCatalog, deleteCatalog, type AdminCategory, type GalleryProject, type PdfCatalog } from '../lib/adminApi'
 import LanguageSwitcher from '../components/LanguageSwitcher'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -21,8 +21,11 @@ export default function AdminDashboard() {
   const [categories, setCategories] = useState<AdminCategory[]>([])
   const enabledCategories = categories.filter((c) => c.enabled).map((c) => c.id)
   const [messagesCount, setMessagesCount] = useState<number>(0)
+  const [catalogs, setCatalogs] = useState<PdfCatalog[]>([])
   const [actionError, setActionError] = useState<string | null>(null)
   const galleryFileRef = useRef<HTMLInputElement | null>(null)
+  const catalogPdfRef = useRef<HTMLInputElement | null>(null)
+  const catalogCoverRef = useRef<HTMLInputElement | null>(null)
   const [galleryDraft, setGalleryDraft] = useState<{
     category: Category
     location: { de?: string; en?: string }
@@ -35,6 +38,17 @@ export default function AdminDashboard() {
     title: {},
     description: {},
     imageFile: null
+  })
+  const [catalogDraft, setCatalogDraft] = useState<{
+    title: string
+    subtitle: string
+    pdfFile: File | null
+    coverFile: File | null
+  }>({
+    title: '',
+    subtitle: '',
+    pdfFile: null,
+    coverFile: null
   })
 
   const getErrMsg = (e: unknown): string => {
@@ -66,13 +80,14 @@ export default function AdminDashboard() {
         navigate('/admin', { replace: true })
         return
       }
-      Promise.all([listProducts(), listGallery(), listCategories(), listContactMessages()])
-        .then(([p, g, cats, msgs]) => {
+      Promise.all([listProducts(), listGallery(), listCategories(), listContactMessages(), listCatalogs()])
+        .then(([p, g, cats, msgs, cts]) => {
           if (!active) return
           setProducts(p)
           setGallery(g)
           setCategories(cats)
           setMessagesCount(Array.isArray(msgs) ? msgs.length : 0)
+          setCatalogs(cts)
           setIsLoading(false)
         })
         .catch((err) => {
@@ -184,6 +199,36 @@ export default function AdminDashboard() {
     }
   }
 
+  const onCreateCatalog = async (event: React.FormEvent) => {
+    event.preventDefault()
+    const pdfFile = catalogDraft.pdfFile
+    if (!pdfFile) return
+    try {
+      setActionError(null)
+      const pdfUp = await uploadFile(pdfFile)
+      let coverUrl = ''
+      if (catalogDraft.coverFile) {
+        const coverUp = await uploadFile(catalogDraft.coverFile)
+        coverUrl = coverUp.url
+      }
+      const created = await createCatalog({
+        title: catalogDraft.title.trim(),
+        subtitle: catalogDraft.subtitle.trim(),
+        cover: coverUrl,
+        pdf: pdfUp.url
+      })
+      setCatalogs((arr) => [...arr, created])
+      setCatalogDraft({ title: '', subtitle: '', pdfFile: null, coverFile: null })
+      if (catalogPdfRef.current) catalogPdfRef.current.value = ''
+      if (catalogCoverRef.current) catalogCoverRef.current.value = ''
+      broadcastUpdate('catalogs')
+    } catch (e) {
+      const msg = getErrMsg(e)
+      setActionError(msg)
+      alert(msg)
+    }
+  }
+
   if (isLoading) {
     return (
       <MotionPage>
@@ -248,6 +293,48 @@ export default function AdminDashboard() {
               </article>
             ))}
           </div>
+        </section>
+
+        <section className="glass-surface-strong rounded-2xl p-5">
+          <h2 className="text-xl font-semibold text-neutral-900">{t('admin.dashboard.catalogs')}</h2>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {catalogs.map((c) => (
+              <article key={c.id} className="glass-surface rounded-xl overflow-hidden">
+                <img src={c.cover || '/vite.svg'} alt={c.title} className="h-36 w-full object-cover" onError={(e) => (e.currentTarget.src = '/vite.svg')} />
+                <div className="p-3 space-y-2">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-neutral-900 truncate">{c.title}</p>
+                    <p className="text-xs text-neutral-600 truncate">{c.subtitle}</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <a className="glass-chip rounded-lg px-3 py-1 text-xs inline-flex items-center gap-2" href={c.pdf} target="_blank" rel="noreferrer">
+                      {t('admin.catalogs.openPdf')}
+                    </a>
+                    <button className="glass-chip rounded-lg px-3 py-1 text-xs" onClick={async () => {
+                      try {
+                        setActionError(null)
+                        await deleteCatalog(c.id)
+                        setCatalogs((arr) => arr.filter((x) => x.id !== c.id))
+                        broadcastUpdate('catalogs')
+                      } catch (e) {
+                        const msg = getErrMsg(e)
+                        setActionError(msg)
+                        alert(msg)
+                      }
+                    }}>{t('admin.dashboard.delete')}</button>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+          <form className="mt-4 flex flex-wrap items-end gap-2" onSubmit={onCreateCatalog}>
+            <input value={catalogDraft.title} onChange={(e) => setCatalogDraft((d) => ({ ...d, title: e.target.value }))} type="text" placeholder={t('admin.catalogs.fields.title')} className="glass-input rounded-lg px-3 py-2 text-sm w-full sm:w-56" />
+            <input value={catalogDraft.subtitle} onChange={(e) => setCatalogDraft((d) => ({ ...d, subtitle: e.target.value }))} type="text" placeholder={t('admin.catalogs.fields.subtitle')} className="glass-input rounded-lg px-3 py-2 text-sm w-full sm:flex-1 sm:min-w-[220px]" />
+            <input ref={catalogPdfRef} type="file" accept="application/pdf" className="glass-input rounded-lg px-3 py-2 text-sm w-full sm:w-auto" onChange={(e) => setCatalogDraft((d) => ({ ...d, pdfFile: e.target.files?.[0] || null }))} />
+            <input ref={catalogCoverRef} type="file" accept="image/*" className="glass-input rounded-lg px-3 py-2 text-sm w-full sm:w-auto" onChange={(e) => setCatalogDraft((d) => ({ ...d, coverFile: e.target.files?.[0] || null }))} />
+            <button type="submit" className="glass-chip rounded-lg px-3 py-2 text-sm font-semibold w-full sm:w-auto">{t('admin.dashboard.add')}</button>
+            <p className="basis-full text-xs text-neutral-600">{t('admin.catalogs.hint')}</p>
+          </form>
         </section>
 
         <section className="glass-surface-strong rounded-2xl p-5">

@@ -3,8 +3,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
 import { catalogProducts as fallbackProducts, type CatalogProduct } from '../data/catalogProducts'
-import { pdfCatalogs } from '../data/pdfCatalogs'
-import { fetchProducts, fetchCategories } from '../lib/api'
+import { pdfCatalogs as fallbackCatalogs } from '../data/pdfCatalogs'
+import { fetchProducts, fetchCategories, fetchCatalogs, type PdfCatalog } from '../lib/api'
 
 const demoImage = '/vite.svg'
 
@@ -20,15 +20,17 @@ export default function Products() {
   const catalogSliderRef = useRef<HTMLDivElement | null>(null)
 
   const [allProducts, setAllProducts] = useState<CatalogProduct[]>(fallbackProducts.map((p) => ({ ...p, image: demoImage })))
+  const [catalogs, setCatalogs] = useState<PdfCatalog[]>(fallbackCatalogs)
   useEffect(() => {
     let alive = true
 
     const refresh = async () => {
       try {
-        const [cats, items] = await Promise.all([fetchCategories(), fetchProducts()])
+        const [cats, items, catsPdfs] = await Promise.all([fetchCategories(), fetchProducts(), fetchCatalogs()])
         if (!alive) return
         if (Array.isArray(cats) && cats.length) setCategories(cats)
         setAllProducts(items)
+        if (Array.isArray(catsPdfs) && catsPdfs.length) setCatalogs(catsPdfs)
       } catch {
         void 0
       }
@@ -172,7 +174,7 @@ export default function Products() {
             onMouseEnter={() => setIsCatalogAutoScrollPaused(true)}
             onMouseLeave={() => setIsCatalogAutoScrollPaused(false)}
           >
-            {pdfCatalogs.map((catalog) => (
+            {catalogs.map((catalog) => (
               <button
                 key={catalog.id}
                 type="button"
