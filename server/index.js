@@ -383,14 +383,27 @@ app.put('/api/products/:id', requireAuth, requireKvForWrites, upload.single('ima
 })
 
 // Categories
+const normalizeSlug = (input) => {
+  const raw = String(input || '').trim().toLowerCase()
+  if (!raw) return ''
+  const mapped = raw
+    .replace(/ä/g, 'ae')
+    .replace(/ö/g, 'oe')
+    .replace(/ü/g, 'ue')
+    .replace(/ß/g, 'ss')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+  return mapped
+}
 app.get('/api/categories', async (_req, res) => {
   const items = await readData(DB.categories, CATEGORIES_FILE)
   res.json(items)
 })
 app.post('/api/categories', requireAuth, requireKvForWrites, async (req, res) => {
   const { id, image } = req.body || {}
-  const slug = String(id || '').trim().toLowerCase()
-  if (!/^[a-z0-9-]+$/.test(slug)) return res.status(400).json({ error: 'Invalid id' })
+  const slug = normalizeSlug(id)
+  if (!slug) return res.status(400).json({ error: 'Invalid id' })
   const items = await readData(DB.categories, CATEGORIES_FILE)
   if (items.find((c) => c.id === slug)) return res.status(409).json({ error: 'Already exists' })
   const entry = { id: slug, enabled: true, image: typeof image === 'string' ? image : '' }

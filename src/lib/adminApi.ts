@@ -89,7 +89,11 @@ export async function uploadFile(file: File): Promise<{ url: string }> {
     return { url: blob.url }
   }
 
-  if (window.location.hostname.includes('vercel.app')) {
+  const hostname = window.location.hostname
+  const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1'
+  const isHttpsRemote = window.location.protocol === 'https:' && !isLocalhost
+
+  if (hostname.includes('vercel.app') || isHttpsRemote) {
     return uploadViaBlob()
   }
 
