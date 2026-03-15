@@ -17,7 +17,7 @@ const resources = {
       home: {
         hero: {
           title: 'High-performance windows and doors for modern living',
-          subtitle: 'Discover custom solutions for insulation, design, and comfort with a reliable installation service.',
+          subtitle: 'Discover a professional installation and assembly service for windows, doors, and blinds in Oesterich-Winkel, offering tailored solutions, quality workmanship, and reliable installation to enhance the comfort and appearance of your home or business. 🏡🔧',
           catalogButton: 'View catalog',
           quoteButton: 'Request a quote'
         },
@@ -356,7 +356,7 @@ const resources = {
       home: {
         hero: {
           title: 'Hochwertige Fenster und Türen für modernes Wohnen',
-          subtitle: 'Entdecken Sie maßgeschneiderte Lösungen für Dämmung, Design und Komfort mit zuverlässiger Montage.',
+          subtitle: 'Entdecken Sie einen professionellen Installations- und Montageservice für Fenster, Türen und Rollläden in Oestrich-Winkel, der maßgeschneiderte Lösungen, hochwertige Verarbeitung und eine zuverlässige Installation bietet, um den Komfort und das Erscheinungsbild Ihres Hauses oder Unternehmens zu verbessern. 🏡🔧',
           catalogButton: 'Katalog ansehen',
           quoteButton: 'Angebot anfordern'
         },
