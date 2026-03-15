@@ -76,7 +76,7 @@ export async function logout() {
 }
 
 export async function uploadFile(file: File): Promise<{ url: string }> {
-  if (window.location.hostname.includes('vercel.app')) {
+  const uploadViaBlob = async (): Promise<{ url: string }> => {
     const mod = (await import('@vercel/blob/client')) as unknown as {
       upload: (pathname: string, file: File, opts: { access: 'public' | 'private'; handleUploadUrl: string }) => Promise<{ url: string }>
     }
@@ -85,13 +85,20 @@ export async function uploadFile(file: File): Promise<{ url: string }> {
     const sess = (await s.json().catch(() => null)) as unknown
     const token = isRecord(sess) && typeof sess.token === 'string' ? sess.token : ''
     if (!token) throw new Error('Upload failed (missing upload session)')
-    const blob = await mod.upload(file.name, file, { access: 'public', handleUploadUrl: `/api/blob/upload?u=${encodeURIComponent(token)}` })
+    const blob = await mod.upload(file.name, file, { access: 'public', handleUploadUrl: api(`/api/blob/upload?u=${encodeURIComponent(token)}`) })
     return { url: blob.url }
+  }
+
+  if (window.location.hostname.includes('vercel.app')) {
+    return uploadViaBlob()
   }
 
   const form = new FormData()
   form.append('file', file)
   const res = await fetch(api('/api/uploads'), { method: 'POST', body: form, credentials: 'include' })
+  if (res.status === 410) {
+    return uploadViaBlob()
+  }
   await assertOk(res, 'Upload failed')
   const out = (await res.json().catch(() => null)) as unknown
   const base = getApiBase()

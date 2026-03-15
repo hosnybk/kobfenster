@@ -51,7 +51,12 @@ const defaultCategories = [
   { id: 'tueren', enabled: true, image: '/categories/tueren.webp' },
   { id: 'rolllaeden', enabled: true, image: '/categories/rolllaeden.png' },
   { id: 'raffstore', enabled: true, image: '/categories/raffstore.webp' },
-  { id: 'garagentor', enabled: true, image: '/categories/garagentor.svg' }
+  { id: 'garagentor', enabled: true, image: '/categories/garagentor.svg' },
+  { id: 'haustueren', enabled: true, image: '/categories/default.svg' },
+  { id: 'insektenschutz', enabled: true, image: '/categories/default.svg' },
+  { id: 'markisen', enabled: true, image: '/categories/default.svg' },
+  { id: 'innenturen', enabled: true, image: '/categories/default.svg' },
+  { id: 'terrassenueberdachungen', enabled: true, image: '/categories/default.svg' }
 ]
 
 const isKvConfigured = () =>
