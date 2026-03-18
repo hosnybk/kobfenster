@@ -447,11 +447,16 @@ export default function Home() {
                 </svg>
                 <span>{t('home.testimonials.bookingLabel')}</span>
               </a>
-              <div className="glass-chip inline-flex items-center gap-2 rounded-full px-3 py-1.5">
+              <a
+                href="https://g.page/r/CZgFEx9B_26PEBI/review"
+                target="_blank"
+                rel="noreferrer"
+                className="glass-chip inline-flex items-center gap-2 rounded-full px-3 py-1.5 transition hover:bg-white/70"
+              >
                 <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">G</span>
                 <span className="text-xs font-semibold text-neutral-700">{t('home.testimonials.googleLabel')}</span>
                 <span className="text-xs font-semibold tracking-wider text-amber-500">★★★★★</span>
-              </div>
+              </a>
             </div>
           </div>
           <div className="grid gap-4 md:grid-cols-3">
