@@ -17,7 +17,8 @@ const resources = {
       home: {
         hero: {
           title: 'High-performance windows and doors for modern living',
-          subtitle: 'Discover a professional installation and assembly service for windows, doors, and blinds in Oestrich-Winkel, offering tailored solutions, quality workmanship, and reliable installation to enhance the comfort and appearance of your home or business.',
+          subtitle:
+            'Professional window, door, and shutter installation, repair, and assembly services in Oestrich-Winkel. We deliver tailored solutions, superior craftsmanship, and reliable installations designed to enhance both the comfort and aesthetic appeal of your home or business. We specialize in the installation and repair of all types of doors, including interior doors, sliding doors, garage doors, and custom interior solutions.',
           catalogButton: 'View catalog',
           quoteButton: 'Request a quote'
         },
@@ -387,7 +388,8 @@ const resources = {
       home: {
         hero: {
           title: 'Hochwertige Fenster und Türen für modernes Wohnen',
-          subtitle: 'Entdecken Sie einen professionellen Installations- und Montageservice für Fenster, Türen und Rollläden in Oestrich-Winkel, der maßgeschneiderte Lösungen, hochwertige Verarbeitung und eine zuverlässige Installation bietet, um den Komfort und das Erscheinungsbild Ihres Hauses oder Unternehmens zu verbessern.',
+          subtitle:
+            'Professionelle Montage, Reparatur und Installation von Fenstern, Türen und Rollläden in Oestrich-Winkel. Wir bieten maßgeschneiderte Lösungen, hochwertige Verarbeitung und zuverlässige Installationen, die den Komfort und die Ästhetik Ihres Hauses oder Unternehmens verbessern. Wir sind spezialisiert auf die Installation und Reparatur aller Türarten, einschließlich Innentüren, Schiebetüren, Garagentore und individueller Innenlösungen.',
           catalogButton: 'Katalog ansehen',
           quoteButton: 'Angebot anfordern'
         },
