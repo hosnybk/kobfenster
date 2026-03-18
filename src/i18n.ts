@@ -433,7 +433,7 @@ const resources = {
           button: 'Galerie ansehen'
         },
         icons: {
-          panorama: 'Panorama',
+          panorama: 'Schiebetür',
           store: 'Store',
           hoverCatalog: 'Zum Katalog'
         }
