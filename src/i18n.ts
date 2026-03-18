@@ -62,7 +62,7 @@ const resources = {
           button: 'View gallery'
         },
         icons: {
-          panorama: 'Panorama',
+          panorama: 'Sliding door',
           store: 'Store',
           hoverCatalog: 'View catalog'
         }
