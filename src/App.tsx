@@ -37,7 +37,7 @@ function App() {
     const lang = i18n.language.startsWith('en') ? 'en' : 'de'
     document.documentElement.lang = lang
     let title = 'KOB Fenster'
-    let description = t('home.hero.subtitle')
+    let description = t('home.seo.description')
     if (path === '/about') {
       title = `KOB Fenster — ${t('nav.about')}`
       description = t('about.hero.subtitle')
@@ -51,7 +51,7 @@ function App() {
       title = `KOB Fenster — ${t('nav.contact')}`
       description = t('contact.subtitle')
     } else {
-      title = `KOB Fenster — ${t('nav.home')}`
+      title = t('home.seo.title')
     }
     setMeta(title, String(description), lang)
     ensureCanonical()

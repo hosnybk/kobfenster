@@ -15,10 +15,16 @@ const resources = {
         call: 'Call'
       },
       home: {
+        seo: {
+          title: 'KOB Fenster | Window & door installation and repair in Oestrich-Winkel',
+          description: 'Professional window and door installation and repair services in Oestrich-Winkel. Reliable craftsmanship and tailored solutions for homes and businesses.'
+        },
         hero: {
           title: 'High-performance windows and doors for modern living',
           subtitle:
             'Professional window, door, and shutter installation, repair, and assembly services in Oestrich-Winkel. We deliver tailored solutions, superior craftsmanship, and reliable installations designed to enhance both the comfort and aesthetic appeal of your home or business. We specialize in the installation and repair of all types of doors, including interior doors, sliding doors, garage doors, and custom interior solutions.',
+          subtitleRich:
+            'Professional <1>window, door, and shutter installation</1>, <1>repair</1>, and assembly services in <1>Oestrich-Winkel</1>. We deliver tailored solutions, superior craftsmanship, and reliable installations designed to enhance both the comfort and aesthetic appeal of your home or business. We specialize in the <1>installation and repair</1> of all types of doors, including interior doors, sliding doors, garage doors, and custom interior solutions.',
           catalogButton: 'View catalog',
           quoteButton: 'Request a quote'
         },
@@ -386,10 +392,16 @@ const resources = {
         call: 'Anrufen'
       },
       home: {
+        seo: {
+          title: 'KOB Fenster | Fenster- und Türenmontage & Reparatur in Oestrich-Winkel',
+          description: 'Professionelle Installation und Reparatur von Fenstern und Türen in Oestrich-Winkel. Zuverlässige Montage, hochwertige Verarbeitung und maßgeschneiderte Lösungen.'
+        },
         hero: {
           title: 'Hochwertige Fenster und Türen für modernes Wohnen',
           subtitle:
             'Professionelle Montage, Reparatur und Installation von Fenstern, Türen und Rollläden in Oestrich-Winkel. Wir bieten maßgeschneiderte Lösungen, hochwertige Verarbeitung und zuverlässige Installationen, die den Komfort und die Ästhetik Ihres Hauses oder Unternehmens verbessern. Wir sind spezialisiert auf die Installation und Reparatur aller Türarten, einschließlich Innentüren, Schiebetüren, Garagentore und individueller Innenlösungen.',
+          subtitleRich:
+            'Professionelle <1>Montage, Reparatur und Installation von Fenstern, Türen und Rollläden</1> in <1>Oestrich-Winkel</1>. Wir bieten maßgeschneiderte Lösungen, hochwertige Verarbeitung und zuverlässige Installationen, die den Komfort und die Ästhetik Ihres Hauses oder Unternehmens verbessern. Wir sind spezialisiert auf die <1>Installation und Reparatur</1> aller Türarten, einschließlich Innentüren, Schiebetüren, Garagentore und individueller Innenlösungen.',
           catalogButton: 'Katalog ansehen',
           quoteButton: 'Angebot anfordern'
         },

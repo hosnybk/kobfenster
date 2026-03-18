@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
+import { Trans, useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import MotionPage from '../components/MotionPage'
@@ -9,6 +9,7 @@ import homeContentData from '../data/homeContent.json'
 import type { CatalogProduct } from '../data/catalogProducts'
 import { fetchGallery } from '../lib/api'
 import { fetchProducts, fetchCategoriesDetailed } from '../lib/api'
+import { setJsonLd } from '../lib/seo'
 
 export default function Home() {
   const { t, i18n } = useTranslation()
@@ -225,6 +226,40 @@ export default function Home() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
+  useEffect(() => {
+    const lang = i18n.language.startsWith('en') ? 'en' : 'de'
+    const baseUrl = window.location.origin
+    setJsonLd('localbusiness', {
+      '@context': 'https://schema.org',
+      '@type': 'HomeAndConstructionBusiness',
+      name: 'KOB Fenster',
+      url: `${baseUrl}/`,
+      image: `${baseUrl}/favicon.svg`,
+      telephone: '+49 170 8907480',
+      address: {
+        '@type': 'PostalAddress',
+        streetAddress: 'Kranenstraße 19',
+        postalCode: '65375',
+        addressLocality: 'Oestrich-Winkel',
+        addressCountry: 'DE'
+      },
+      areaServed: [
+        { '@type': 'City', name: 'Oestrich-Winkel' },
+        { '@type': 'City', name: 'Wiesbaden' },
+        { '@type': 'City', name: 'Mainz' }
+      ],
+      openingHours: ['Mo-Fr 08:00-18:00'],
+      knowsLanguage: ['de', 'en'],
+      inLanguage: lang,
+      description: t('home.seo.description'),
+      makesOffer: [
+        { '@type': 'Offer', itemOffered: { '@type': 'Service', serviceType: 'Window installation and repair' } },
+        { '@type': 'Offer', itemOffered: { '@type': 'Service', serviceType: 'Door installation and repair' } },
+        { '@type': 'Offer', itemOffered: { '@type': 'Service', serviceType: 'Shutter installation and repair' } }
+      ]
+    })
+  }, [i18n.language, t])
+
   return (
     <MotionPage>
       <section className="relative overflow-hidden border-b border-neutral-200">
@@ -242,7 +277,7 @@ export default function Home() {
                 {t('home.hero.title')}
               </h1>
               <p className="mt-4 max-w-2xl text-base text-neutral-700 sm:text-lg">
-                {t('home.hero.subtitle')}
+                <Trans i18nKey="home.hero.subtitleRich" components={[<strong className="font-semibold text-neutral-900" />]} />
               </p>
               <div className="mt-7 flex flex-wrap gap-3">
                 <Link to="/products" className="rounded-xl bg-cyan-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-cyan-700 sm:text-base">
