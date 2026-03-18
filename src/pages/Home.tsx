@@ -435,10 +435,23 @@ export default function Home() {
         <section className="space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-2xl font-semibold text-neutral-900 sm:text-3xl">{t('home.testimonials.title')}</h2>
-            <div className="glass-chip inline-flex items-center gap-2 rounded-full px-3 py-1.5">
-              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">G</span>
-              <span className="text-xs font-semibold text-neutral-700">{t('home.testimonials.googleLabel')}</span>
-              <span className="text-xs font-semibold tracking-wider text-amber-500">★★★★★</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <a
+                href="https://calendar.app.google/c4fooPVDB2tVoJTB9"
+                target="_blank"
+                rel="noreferrer"
+                className="glass-chip inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold text-neutral-700 transition hover:bg-white/70"
+              >
+                <svg viewBox="0 0 24 24" className="h-4 w-4 text-neutral-700" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.78.62 2.62a2 2 0 0 1-.45 2.11L8 9.95a16 16 0 0 0 6 6l1.5-1.28a2 2 0 0 1 2.11-.45c.84.29 1.72.5 2.62.62A2 2 0 0 1 22 16.92z" />
+                </svg>
+                <span>{t('home.testimonials.bookingLabel')}</span>
+              </a>
+              <div className="glass-chip inline-flex items-center gap-2 rounded-full px-3 py-1.5">
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">G</span>
+                <span className="text-xs font-semibold text-neutral-700">{t('home.testimonials.googleLabel')}</span>
+                <span className="text-xs font-semibold tracking-wider text-amber-500">★★★★★</span>
+              </div>
             </div>
           </div>
           <div className="grid gap-4 md:grid-cols-3">

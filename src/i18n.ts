@@ -47,6 +47,7 @@ const resources = {
         testimonials: {
           title: 'Customer testimonials',
           googleLabel: 'Google Review',
+          bookingLabel: 'Book a call',
           verified: 'Verified review'
         },
         cta: {
@@ -424,6 +425,7 @@ const resources = {
         testimonials: {
           title: 'Kundenstimmen',
           googleLabel: 'Google Bewertung',
+          bookingLabel: 'Telefontermin buchen',
           verified: 'Verifizierte Bewertung'
         },
         cta: {
