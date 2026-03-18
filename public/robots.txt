@@ -2,5 +2,10 @@ User-agent: *
 Disallow: /admin
 Disallow: /admin/
 Disallow: /admin/*
-Sitemap: /sitemap.xml
+Disallow: /api
+Disallow: /api/
+Disallow: /api/*
+Disallow: /catalog-flipbook
+Disallow: /catalog-flipbook/
 
+Sitemap: https://kobfenster.de/sitemap.xml
